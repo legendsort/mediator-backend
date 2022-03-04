@@ -15,7 +15,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from Account.views import (
+    DecoratedTokenObtainPairView,
+    DecoratedTokenVerifyView,
+    DecoratedTokenRefreshView
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path(r'api/token', DecoratedTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path(r'api/token/refresh', DecoratedTokenRefreshView.as_view(), name='token_refresh'),
+    path(r'api/token/verify', DecoratedTokenVerifyView.as_view(), name='token_verify'),
 ]

@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView,
 )
-
+from django.shortcuts import render
 
 class TokenObtainPairResponseSerializer(serializers.Serializer):
     access = serializers.CharField()
@@ -83,3 +83,7 @@ class DecoratedTokenBlacklistView(TokenBlacklistView):
     )
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
+
+
+def test(request):
+    return render(request, 'index.html')

@@ -13,6 +13,9 @@ class Permission(models.Model):
     name = models.CharField(max_length=255, unique=True)
     codename = models.CharField(max_length=255, unique=True)
 
+    def __str__(self):
+        return self.name
+
 
 class Role(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -23,6 +26,9 @@ class Role(models.Model):
         through_fields=('role', 'permission'),
         blank=True,
     )
+
+    def __str__(self):
+        return self.name
 
 
 class Membership(models.Model):
@@ -38,6 +44,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     ip_address = models.GenericIPAddressField(default='0.0.0.0')
     is_online = models.BooleanField(default=False)
+    is_remove = models.BooleanField(default=False)
     profile = GenericForeignKey()
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
     object_id = models.PositiveIntegerField(null=True)

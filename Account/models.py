@@ -9,6 +9,14 @@ from Account.managers import UserManager
 from django.utils.translation import gettext_lazy as _
 
 
+class TimeStampMixin(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
 class Permission(models.Model):
     name = models.CharField(max_length=255, unique=True)
     codename = models.CharField(max_length=255, unique=True)
@@ -29,6 +37,14 @@ class Role(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Unit(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    super_origination = models.CharField(max_length=255, null=True)
+    address = models.CharField(max_length=255, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class Membership(models.Model):
@@ -62,6 +78,63 @@ class CustomerProfile(models.Model):
     phone_number = models.CharField(max_length=255, null=True)
     unit = models.CharField(max_length=255, null=True)
     email = models.CharField(max_length=255, null=True)
-    users = GenericRelation(User, related_query_name='customer_profile')
+    password = models.CharField(max_length=255, null=True)
+    account_is_active = models.BooleanField(default=True)
+    account_is_staff = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+    user = GenericRelation(User, related_query_name='customer_profile')
 
 
+class BusinessType(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(max_length=1024)
+
+
+class RemoteAccount(models.Model):
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user_remote_account')
+    type = models.ForeignKey(BusinessType, on_delete=models.DO_NOTHING, related_name='user_account_business')
+    username = models.CharField(max_length=255)
+    password = models.CharField(max_length=255)
+    host = models.CharField(max_length=255)
+    is_available = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class Log(TimeStampMixin):
+    type = models.ForeignKey(BusinessType, on_delete=models.DO_NOTHING, related_name='log_type')
+    date = models.DateField(auto_now_add=True)
+    logs = models.JSONField(null=True)
+
+
+class Message(models.Model):
+    by = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user_from_message')
+    to = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user_to_message')
+    content = models.TextField(null=True)
+    additional_info = models.JSONField(null=True)
+    type = models.ForeignKey(BusinessType, on_delete=models.DO_NOTHING, related_name='message_business')
+    # order =
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_view = models.BooleanField(default=False)
+    is_highlight = models.BooleanField(default=False)
+
+
+class Post(TimeStampMixin):
+    author = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user_post')
+    title = models.CharField(max_length=255)
+    body = models.TextField(null=True)
+
+    class Meta:
+        verbose_name = _("Post")
+        verbose_name_plural = _("Posts")
+
+    def __repr__(self):
+        return f"<Post {self.author}:{self.title}>"
+
+    def __str__(self):
+        return f"{self.author}:{self.title}"
+
+
+class Comment(TimeStampMixin):
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user_comment')
+    content = models.TextField(null=True)
+    post = models.ForeignKey(Post, on_delete=models.DO_NOTHING, related_name='post_comment')

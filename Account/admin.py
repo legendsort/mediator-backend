@@ -6,7 +6,8 @@ from Account.models import User, Role, Permission, Membership
 
 @admin.register(User)
 class CustomizeUserAdmin(UserAdmin):
-    list_display = ('id', 'username', 'role')
+    list_display = ('id', 'username')
+    add_fieldsets = ()
 
 
 @admin.register(Role)

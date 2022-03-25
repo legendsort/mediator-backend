@@ -27,6 +27,7 @@ class TokenAuthMiddleware:
         self.inner = inner
 
     async def __call__(self, scope, receive, send):
+        print('here')
         close_old_connections()
         query_string = parse_qs(scope['query_string'].decode())
         token = query_string.get('token')

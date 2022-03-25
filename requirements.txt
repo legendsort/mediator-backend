@@ -49,3 +49,6 @@ typing_extensions==4.1.1
 tzdata==2021.5
 wcwidth==0.2.5
 zope.interface==5.4.0
+
+requests~=2.27.1
+environ~=1.0

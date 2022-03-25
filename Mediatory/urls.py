@@ -15,19 +15,26 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 from Account.views import (
     DecoratedTokenObtainPairView,
     DecoratedTokenVerifyView,
     DecoratedTokenRefreshView,
-    test
+    test,
+    room
 )
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('test', test),
+    path('chat/<str:room_name>/', room, name='room'),
     path(r'api/token', DecoratedTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path(r'api/token/refresh', DecoratedTokenRefreshView.as_view(), name='token_refresh'),
     path(r'api/token/verify', DecoratedTokenVerifyView.as_view(), name='token_verify'),
-    path('api/account/', include('Account.urls'))
+    path('api/account/', include('Account.urls')),
+    path('api/bank/', include('Bank.urls'))
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT, show_indexes=True)

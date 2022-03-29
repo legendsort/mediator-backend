@@ -26,21 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = """b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABA0OWu54A
-6LN+44mz/I5SrPAAAAEAAAAAEAAACXAAAAB3NzaC1yc2EAAAADAQABAAAAgQD6Vpagsgb/
-mK69zbq991qpbGiPYSGnZO1ttWVXHIoQEhCHZNoKplK4LAw84Lp8JksWQAQDdn0uG9uj6w
-YYNL7D+hjQcHm382Yiz8VmDTrdYN0YMWe15IbwszzYG3HjLKX7tikYjBwutjBnCR4lhZgf
-iXD/j5cHWsYHF5FvX1Z+xwAAAhAWBgPqwJxVFuac4Sh/4tt7Z/BIHaLWMl7uDzOASPhoRt
-Vl8JFEt1/CL4zhMQUruq+ONxSqQa9gISuRuzztH5KKPODqChsLwaas762VzWOfZhMOV6HF
-RHy0OEnixGwdFpIn5pKXcuKVQmu61YmwrjKRtP4YSA1kywhHWD49fGSeKtgtID0zWAd4z5
-AgrskTtIqF4xstdU6+LvYB6mCPjnO3bKGbHF4C5zMgmJOhAUkGM8OHpoT5WmGmLoJHnohN
-15PCXzBmgINFboDOcoXuT+JdMBRw5WmVCSmpwn0mIs0fd65BiGShmASv5N9n+dzfjfBTtY
-y0X8vPceuisC85kVBGmdVS2ITYr4IKjxQLuNTkYYPkHhg7U3ORQIjgtauC9yydVZdM1mNX
-awGcYCCuALojD0GyG9OBWY4uqYaBrhNFhjkl5QvNTJU+sfD1Co6dxvmpD9ByotZyqt5fH0
-YKevaDyAh04FnXcBI1546qHbPu2zBcvjywZUL50cG28d7XpxG5mb79pLFeNbWCtd5ikGnl
-1D1Mn2dAIZoLRlZlzlyi/8PTVn8o0d2lI7i69EZJ/Ox7tgwy6CeBdVQ5J1hUTl2hW1JlzW
-7Vq8EA3xqmo/ztgCfEX19rh9CKYiTTtbdnLVNpL1RI1xuyCwrp3wApOUJKXnELBNNrg57x
-lZzPiVHAuaa0rdttIZ4RTlHuOF7rI/Q="""
+SECRET_KEY = "b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABA0OWu54A"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -152,8 +138,8 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=360),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=36000),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=100),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,
     'UPDATE_LAST_LOGIN': False,
@@ -200,7 +186,7 @@ REST_FRAMEWORK = {
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Asia/Pyongyang'
+TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
@@ -236,4 +222,5 @@ Q_CLUSTER = {
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'Account.User'
 BANK_API_BASE_URL = env('BANK_API_BASE_URL')
+MEDIATOR_SERVICE_API_BASE_URL = env('MEDIATOR_SERVICE_API_BASE_URL')
 

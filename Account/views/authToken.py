@@ -1,3 +1,5 @@
+from abc import ABC
+
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework_simplejwt.views import (
@@ -6,7 +8,10 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView,
 )
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 from django.shortcuts import render
+
 
 class TokenObtainPairResponseSerializer(serializers.Serializer):
     access = serializers.CharField()
@@ -19,7 +24,17 @@ class TokenObtainPairResponseSerializer(serializers.Serializer):
         raise NotImplementedError()
 
 
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['name'] = user.username
+        return token
+
+
 class DecoratedTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
     @swagger_auto_schema(
         responses={
             status.HTTP_200_OK: TokenObtainPairResponseSerializer,

@@ -17,7 +17,8 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-
+from Account.views.MediatoryAPI import MediatorViewSet
+from rest_framework.routers import DefaultRouter
 from Account.views import (
     DecoratedTokenObtainPairView,
     DecoratedTokenVerifyView,
@@ -25,6 +26,9 @@ from Account.views import (
     test,
     room
 )
+
+router = DefaultRouter(trailing_slash=False)
+router.register(r'', MediatorViewSet, basename='mediator')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -34,6 +38,7 @@ urlpatterns = [
     path(r'api/token/refresh', DecoratedTokenRefreshView.as_view(), name='token_refresh'),
     path(r'api/token/verify', DecoratedTokenVerifyView.as_view(), name='token_verify'),
     path('api/account/', include('Account.urls')),
+    path('api/mediator/', include(router.urls)),
     path('api/bank/', include('Bank.urls'))
 ]
 if settings.DEBUG:

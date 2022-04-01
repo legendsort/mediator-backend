@@ -72,6 +72,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.username
 
+    def update_online(self, status=False):
+        self.is_online = status
+        self.save()
+        return True
+
 
 class CustomerProfile(models.Model):
     position = models.CharField(max_length=255, null=True)
@@ -138,3 +143,12 @@ class Comment(TimeStampMixin):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user_comment')
     content = models.TextField(null=True)
     post = models.ForeignKey(Post, on_delete=models.DO_NOTHING, related_name='post_comment')
+
+
+class Notice(TimeStampMixin):
+    to = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='notice_to_user')
+    content = models.TextField(null=True)
+    additional_info = models.JSONField(null=True)
+    is_view = models.BooleanField(default=False)
+    is_highlight = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)

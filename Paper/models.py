@@ -8,7 +8,27 @@ from django.contrib.contenttypes.models import ContentType
 
 class ReviewType(models.Model):
     name = models.CharField(max_length=255, unique=True)
+    json = models.JSONField(null=True)
     description = models.TextField(null=True)
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=12)
+    description = models.CharField(max_length=255)
+
+
+class Country(models.Model):
+    iso = models.CharField(max_length=2)
+    name = models.CharField(max_length=80)
+    nice_name = models.CharField(max_length=80)
+    iso3 = models.CharField(max_length=3, null=True)
+    num_code = models.IntegerField(null=True)
+    phone_code = models.SmallIntegerField()
+
+
+class Frequency(models.Model):
+    name = models.CharField(max_length=12)
+    description = models.CharField(max_length=255)
 
 
 class Publisher(TimeStampMixin):
@@ -28,6 +48,7 @@ class Journal(TimeStampMixin):
     description = models.TextField(null=True)
     logo_url = models.URLField(null=True)
     issn = models.CharField(max_length=255, null=True)
+    eissn = models.CharField(max_length=255, null=True)
     review_type = models.ForeignKey(ReviewType, on_delete=models.DO_NOTHING, related_name='journal_review_method')
     publisher = models.ForeignKey(Publisher, on_delete=models.DO_NOTHING, related_name='journal_publisher')
     guide_url = models.URLField(null=True)
@@ -94,15 +115,6 @@ class Resource(TimeStampMixin):
     order = GenericRelation(Order, related_query_name='order_resource')
     is_download = models.BooleanField(default=True)
     file_lists = models.JSONField(null=True)
-
-
-class Country(models.Model):
-    iso = models.CharField(max_length=2)
-    name = models.CharField(max_length=80)
-    nice_name = models.CharField(max_length=80)
-    iso3 = models.CharField(max_length=3, null=True)
-    num_code = models.IntegerField(null=True)
-    phone_code = models.SmallIntegerField()
 
 
 class Author(TimeStampMixin):

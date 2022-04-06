@@ -39,7 +39,8 @@ urlpatterns = [
     path(r'api/token/verify', DecoratedTokenVerifyView.as_view(), name='token_verify'),
     path('api/account/', include('Account.urls')),
     path('api/mediator/', include(router.urls)),
-    path('api/bank/', include('Bank.urls'))
+    path('api/bank/', include('Bank.urls')),
+    path('api/wipo/', include('Wipo.urls'))
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT, show_indexes=True)

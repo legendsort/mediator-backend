@@ -31,6 +31,11 @@ class Frequency(models.Model):
     description = models.CharField(max_length=255)
 
 
+class ProductType(models.Model):
+    name = models.CharField(max_length=12)
+    description = models.CharField(max_length=255)
+
+
 class Publisher(TimeStampMixin):
     name = models.CharField(max_length=255, unique=True)
     name_translate = models.CharField(max_length=255, null=True)
@@ -43,6 +48,21 @@ class Publisher(TimeStampMixin):
         return self.name_translate
 
 
+class JournalFrequency(models.Model):
+    journal = models.ForeignKey('Journal', on_delete=models.DO_NOTHING, related_name='journal_frequency')
+    frequency = models.ForeignKey('Frequency', on_delete=models.DO_NOTHING, related_name='frequency_journal')
+
+
+class JournalCountry(models.Model):
+    journal = models.ForeignKey('Journal', on_delete=models.DO_NOTHING, related_name='journal_country')
+    country = models.ForeignKey('Country', on_delete=models.DO_NOTHING, related_name='country_journal')
+
+
+class JournalProductType(models.Model):
+    journal = models.ForeignKey('Journal', on_delete=models.DO_NOTHING, related_name='journal_product')
+    product = models.ForeignKey('ProductType', on_delete=models.DO_NOTHING, related_name='product_journal')
+
+
 class Journal(TimeStampMixin):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True)
@@ -52,6 +72,31 @@ class Journal(TimeStampMixin):
     review_type = models.ForeignKey(ReviewType, on_delete=models.DO_NOTHING, related_name='journal_review_method')
     publisher = models.ForeignKey(Publisher, on_delete=models.DO_NOTHING, related_name='journal_publisher')
     guide_url = models.URLField(null=True)
+    url = models.URLField(null=True)
+    start_year = models.SmallIntegerField(default=1990)
+    impact_factor = models.FloatField(default=0.0)
+    open_access = models.IntegerField(null=True)
+    flag = models.BooleanField(default=False)
+    issues_per_year = models.SmallIntegerField(null=True)
+    countries = models.ManyToManyField(
+        Country,
+        through='JournalCountry',
+        through_fields=('journal', 'country'),
+        blank=True,
+    )
+    frequency = models.ManyToManyField(
+        Frequency,
+        through='JournalFrequency',
+        through_fields=('journal', 'frequency'),
+        blank=True,
+    )
+
+    products = models.ManyToManyField(
+        ProductType,
+        through='JournalProductType',
+        through_fields=('journal', 'product'),
+        blank=True,
+    )
 
     class Meta:
         verbose_name = _("Journal")

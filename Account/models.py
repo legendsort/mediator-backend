@@ -7,6 +7,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from Account.managers import UserManager
 from django.utils.translation import gettext_lazy as _
+import hashlib
 
 
 class TimeStampMixin(models.Model):
@@ -152,3 +153,15 @@ class Notice(TimeStampMixin):
     is_view = models.BooleanField(default=False)
     is_highlight = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+def user_directory_path(instance, filename):
+    return f"upload/{hashlib.md5(str(instance.user.id).encode('utf-8')).hexdigest()}/{filename}"
+
+
+class Upload(TimeStampMixin):
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user_upload')
+    file = models.FileField(blank=False, null=False, upload_to=user_directory_path)
+    submit = models.ForeignKey('Paper.Submit', on_delete=models.DO_NOTHING, null=True, related_name='user_upload')
+
+

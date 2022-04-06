@@ -15,7 +15,7 @@ class APIBaseService:
         self.base_url = getattr(settings, 'MEDIATOR_SERVICE_API_BASE_URL', '')
         self.headers = {
             'Content-Type': 'application/json',
-            'Accept': 'text/plain',
+            'Accept': '*/*',
             'Authorization': f"Bearer {token}"
         }
         self.token = token
@@ -33,6 +33,8 @@ class APIBaseService:
                 res = req.post(f"{url}", headers=headers, data={'data': json.dumps(data)}, files=files)
             elif method == 'get':
                 res = req.get(url, params=data, headers=self.headers)
+            elif method == 'delete':
+                res = req.delete(url, json=data, headers=self.headers)
             else:
                 res = req.post(url, json=data, headers=self.headers)
             if 400 > res.status_code >= 200:
@@ -40,6 +42,8 @@ class APIBaseService:
             elif res.status_code >= 400:
                 if res.status_code == 404:
                     message = 'Not Found'
+                if res.status_code >= 500:
+                    message = 'Server has error!'
                 return False, message
             return True, res.json()
         except req.exceptions.InvalidURL:

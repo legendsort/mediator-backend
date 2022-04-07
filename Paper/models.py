@@ -186,4 +186,3 @@ class Author(TimeStampMixin):
     appellation = models.CharField(max_length=12,
                                    choices=Appellation.choices,
                                    default=Appellation.MR,)
-

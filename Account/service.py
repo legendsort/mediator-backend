@@ -6,7 +6,10 @@ from time import sleep
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.contrib.auth.models import AnonymousUser
-from django.db import models
+from Account.message import Error
+import time
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 
 class APIBaseService:
@@ -92,3 +95,49 @@ class NotificationService:
     def get_channel_name(self, name):
         return f"{self.channel_prefix}_{name}"
 
+
+class WatchService:
+    # Set the directory on watch
+    watchDirectory = "/"
+
+    def __init__(self):
+        self.observer = Observer()
+
+    def run(self, during=None):
+        event_handler = Handler()
+        self.observer.schedule(event_handler, self.watchDirectory, recursive=True)
+        self.observer.start()
+        print('===start===')
+        # try:
+        #     time.sleep(1)
+        #     print('========')
+        #     # while True:
+        #     #     time.sleep(10)
+        # except Exception as e:
+        #     print(e)
+        #     self.observer.stop()
+        #     print("Observer Stopped")
+        print('===join===')
+        self.observer.join()
+        print('===joined===')
+
+    def stop(self):
+        self.observer.stop()
+        print("Observer Stopped")
+
+
+class Handler(FileSystemEventHandler):
+
+    def on_any_event(self, event):
+        if event.is_directory:
+            return None
+
+        elif event.event_type == 'created':
+            # Event is created, you can process it now
+            print("Watchdog received created event - % s." % event.src_path)
+        elif event.event_type == 'modified':
+            # Event is modified, you can process it now
+            print("Watchdog received modified event - % s." % event.src_path)
+
+    def on_deleted(self, event):
+        pass

@@ -163,5 +163,5 @@ class Upload(TimeStampMixin):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user_upload')
     file = models.FileField(blank=False, null=False, upload_to=user_directory_path)
     submit = models.ForeignKey('Paper.Submit', on_delete=models.DO_NOTHING, null=True, related_name='user_upload')
-
-
+    is_upload = models.BooleanField(default=False)
+    # article = models.ForeignKey('Paper.Article', on_delete=models.DO_NOTHING, null=True, related_name='article')

@@ -11,7 +11,7 @@ from Account.models import User
 
 
 class UserViewSet(ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, ]
     serializer_class = UserSerializer
     queryset = User.objects.exclude(is_remove=False)
 

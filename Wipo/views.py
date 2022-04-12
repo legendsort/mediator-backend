@@ -37,20 +37,20 @@ class FTPViewSet(viewsets.ViewSet):
                 'data': []
             })
 
-    @action(detail=False, methods=['delete'], url_path='remove')
+    @action(detail=False, methods=['post'], url_path='remove')
     def remove(self, request, pk=None):
         try:
             refresh = RefreshToken.for_user(self.request.user)
             service = FTPService(token=str(refresh.access_token))
             response_code, response = service.remove(path=request.data.get('path', None))
+            print(request.data)
             return Response({
                 'response_code': response_code,
-                'message': response['message'] if not response_code and response['message'] else response
-                if not response_code else response['message'],
-                'data': []
+                'message': response if not response_code else response['message'],
+                'data': response['data'] if response_code else []
             })
         except Exception as e:
-            print(e)
+            print('remove exception', e)
             return Response({
                 'response_code': False,
                 'message': 'Server has error',
@@ -67,7 +67,7 @@ class FTPViewSet(viewsets.ViewSet):
             return Response({
                 'response_code': response_code,
                 'message': response if not response_code else response['message'],
-                'data': []
+                'data': response['data'] if response_code else []
             })
         except Exception as e:
             print(e)

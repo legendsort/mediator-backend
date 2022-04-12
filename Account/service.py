@@ -40,6 +40,7 @@ class APIBaseService:
                 res = req.delete(url, json=data, headers=self.headers)
             else:
                 res = req.post(url, json=data, headers=self.headers)
+            print('api calling ', res.status_code)
             if 400 > res.status_code >= 200:
                 pass
             elif res.status_code >= 400:

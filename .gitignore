@@ -2,3 +2,5 @@
 venv/*
 media/*
 #static/
+*.pyc
+.idea/*

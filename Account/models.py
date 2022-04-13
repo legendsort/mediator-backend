@@ -78,6 +78,18 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.save()
         return True
 
+    def has_perm(self, perm, obj=None):
+        if self.is_active and self.is_superuser:
+            return True
+        if not self.role or not self.role.permissions:
+            return False
+        if self.role.permissions.filter(codename=perm).exists():
+            return True
+        return False
+
+    def has_perms(self, perm_list, obj=None):
+        return all(self.has_perm(perm, obj) for perm in perm_list)
+
 
 class CustomerProfile(models.Model):
     position = models.CharField(max_length=255, null=True)

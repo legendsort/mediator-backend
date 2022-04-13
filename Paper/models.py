@@ -3,8 +3,13 @@ from Account.models import TimeStampMixin
 from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
+import hashlib
+import pathlib
+
 # Create your models here.
 
+def publisher_logo_path(instance, filename):
+    return f"upload/publisher/{hashlib.md5(str(filename).encode('utf-8')).hexdigest()}.{pathlib.Path(filename).suffix}"
 
 class ReviewType(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -13,17 +18,17 @@ class ReviewType(models.Model):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=12)
+    name = models.CharField(max_length=12, unique=True)
     description = models.CharField(max_length=255)
 
 
 class Country(models.Model):
-    iso = models.CharField(max_length=2)
-    name = models.CharField(max_length=80)
+    iso = models.CharField(max_length=2, unique=True)
+    name = models.CharField(max_length=80, unique=True)
     nice_name = models.CharField(max_length=80)
     iso3 = models.CharField(max_length=3, null=True)
     num_code = models.IntegerField(null=True)
-    phone_code = models.SmallIntegerField()
+    phone_code = models.SmallIntegerField(null=True)
 
 
 class Frequency(models.Model):
@@ -41,7 +46,7 @@ class Publisher(TimeStampMixin):
     name_translate = models.CharField(max_length=255, null=True)
     description = models.TextField(null=True)
     description_translate = models.TextField(null=True)
-    logo_url = models.URLField(null=True)
+    logo_url = models.ImageField(upload_to=publisher_logo_path, null=True)
     site_address = models.URLField(null=True)
 
     def __str__(self):
@@ -51,6 +56,11 @@ class Publisher(TimeStampMixin):
 class JournalFrequency(models.Model):
     journal = models.ForeignKey('Journal', on_delete=models.DO_NOTHING, related_name='journal_frequency')
     frequency = models.ForeignKey('Frequency', on_delete=models.DO_NOTHING, related_name='frequency_journal')
+
+
+class JournalCategory(models.Model):
+    journal = models.ForeignKey('Journal', on_delete=models.DO_NOTHING, related_name='journal_category')
+    category = models.ForeignKey('Category', on_delete=models.DO_NOTHING, related_name='category_journal')
 
 
 class JournalCountry(models.Model):
@@ -95,6 +105,13 @@ class Journal(TimeStampMixin):
         ProductType,
         through='JournalProductType',
         through_fields=('journal', 'product'),
+        blank=True,
+    )
+
+    categories = models.ManyToManyField(
+        Category,
+        through='JournalCategory',
+        through_fields=('journal', 'category'),
         blank=True,
     )
 

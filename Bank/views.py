@@ -6,19 +6,29 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes, authentication_classes, action
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
-from Bank.serializer import DataSerializer
+from Bank.serializers import DataSerializer
 from Bank.models import Data, DataType
 from Bank.service import BankService
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from dateutil.relativedelta import relativedelta
 from django.utils.timezone import make_aware
+from Paper.render import JSONResponseRenderer
+from rest_framework.pagination import PageNumberPagination
+
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
 
 
 class DataViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = DataSerializer
     queryset = Data.objects.all().order_by('-real_data_created_at')
+    renderer_classes = [JSONResponseRenderer, ]
+    pagination_class = StandardResultsSetPagination
 
     @action(detail=False, url_path='latest')
     def get_latest_data(self, request):

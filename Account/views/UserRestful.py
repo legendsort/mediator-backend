@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes, authentication_classes, action
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
-from Account.serializer import UserSerializer, RoleSerializer
+from Account.serializers import UserSerializer, RoleSerializer
 from Account.models import User
 
 

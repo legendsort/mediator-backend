@@ -4,3 +4,4 @@ media/*
 #static/
 *.pyc
 .idea/*
+.env

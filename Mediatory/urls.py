@@ -40,7 +40,8 @@ urlpatterns = [
     path('api/account/', include('Account.urls')),
     path('api/mediator/', include(router.urls)),
     path('api/bank/', include('Bank.urls')),
-    path('api/wipo/', include('Wipo.urls'))
+    path('api/wipo/', include('Wipo.urls')),
+    path('api/paper/', include('Paper.urls'))
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT, show_indexes=True)

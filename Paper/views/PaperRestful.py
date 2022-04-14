@@ -2,9 +2,7 @@ import django.db.utils
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.pagination import PageNumberPagination
 from rest_framework import viewsets, status
-
 import Paper.serializers
 from Paper.models import Journal, Publisher, Country, ReviewType, Category, ProductType, Frequency, Article
 from Paper.serializers import JournalSerializer, PublisherSerializer
@@ -19,11 +17,13 @@ from Paper.helper import filter_params
 
 # Journal API
 class JournalFilter(django_filters.FilterSet):
+    publisher = django_filters.ModelMultipleChoiceFilter(field_name='publisher', queryset=Publisher.objects.all())
 
     class Meta:
         model = Journal
         fields = {
-            'name': ['exact', ]
+            'name': ['icontains', ],
+            'publisher': ['in']
         }
 
 
@@ -337,7 +337,7 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
             })
 
 
-# Categories API
+# Category API
 class CategoryFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
 
@@ -373,7 +373,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
             })
 
 
-# Categories API
+# Article API
 class ArticleFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
     class Meta:
@@ -391,6 +391,42 @@ class ArticleViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, ]
     filterset_class = ArticleFilter
     queryset = Article.objects.all()
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            self.perform_destroy(self.get_object())
+            return JsonResponse({
+                'response_code': True,
+                'data': [],
+                'message': 'Successfully removed!'
+            })
+        except django.db.DatabaseError:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Can not remove this publisher'
+            })
+
+
+# Status API
+class StatusFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
+
+    class Meta:
+        model = Paper.models.Status
+        fields = {
+            'name': ['icontains']
+        }
+
+
+class StatusViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = Paper.serializers.StatusSerializer
+    pagination_class = StandardResultsSetPagination
+    renderer_classes = [JSONResponseRenderer, ]
+    filter_backends = [DjangoFilterBackend, ]
+    filterset_class = StatusFilter
+    queryset = Paper.models.Status.objects.all()
 
     def destroy(self, request, *args, **kwargs):
         try:

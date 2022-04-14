@@ -1,4 +1,7 @@
 from rest_framework import serializers
+
+import Account.serializers
+import Paper.models
 from Paper.models import Journal, ReviewType, Country, ProductType, Frequency, Category, Publisher, Article
 
 
@@ -113,4 +116,37 @@ class ArticleSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'description',
+        ]
+
+
+class SubmitSerializer(serializers.ModelSerializer):
+    user = Account.serializers.UserSerializer(read_only=True)
+    article = ArticleSerializer(read_only=True)
+
+    class Meta:
+        model = Paper.models.Submit
+        fields = [
+            'id',
+            'user',
+            'article',
+            'title'
+        ]
+
+
+class OrderSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Paper.models.Order
+        fields = [
+            'id',
+        ]
+
+
+class StatusSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Paper.models.Status
+        fields = [
+            'id',
+            'name',
         ]

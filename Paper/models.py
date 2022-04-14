@@ -187,12 +187,11 @@ class OrderStatusLog(TimeStampMixin):
 class Submit(TimeStampMixin):
     order = GenericRelation(Order, related_query_name='order_submit')
     article = models.ForeignKey(Article, on_delete=models.DO_NOTHING, related_name='submit_article', null=True)
-    title = models.CharField(max_length=255, null=True)
+    title = models.CharField(max_length=255)
     abstract = models.TextField(null=True)
     keywords = models.TextField(null=True)
-    upload_files = models.JSONField(null=True)
     major = models.TextField(null=True)
-    user = models.ForeignKey('Account.User', on_delete=models.DO_NOTHING, related_name='submit_user')
+    user = models.ForeignKey('Account.User', on_delete=models.DO_NOTHING, related_name='submit_user', null=True)
     journal = models.ForeignKey(Journal, on_delete=models.DO_NOTHING, related_name='submit_journal', null=True)
 
 

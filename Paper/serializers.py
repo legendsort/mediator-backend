@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from Paper.models import Journal, ReviewType, Country, ProductType, Frequency, Category, Publisher
+from Paper.models import Journal, ReviewType, Country, ProductType, Frequency, Category, Publisher, Article
 
 
 class FrequencySerializer(serializers.ModelSerializer):
@@ -75,11 +75,11 @@ class PublisherSerializer(serializers.ModelSerializer):
 
 class JournalSerializer(serializers.ModelSerializer):
     review_type = ReviewTypeSerializer(read_only=True)
-    countries = CountrySerializer(many=True)
-    frequency = FrequencySerializer(many=True)
-    categories = CategorySerializer(many=True)
-    products = ProductTypeSerializer(many=True)
-    publisher = PublisherSerializer(read_only=True)
+    countries = CountrySerializer(many=True, required=False)
+    frequency = FrequencySerializer(read_only=True)
+    categories = CategorySerializer(many=True, required=False)
+    products = ProductTypeSerializer(many=True, required=False)
+    publisher = PublisherSerializer(read_only=True, required=False)
 
     class Meta:
         model = Journal
@@ -102,4 +102,15 @@ class JournalSerializer(serializers.ModelSerializer):
             'categories',
             'products',
             'publisher'
+        ]
+
+
+class ArticleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Article
+        fields = [
+            'id',
+            'name',
+            'description',
         ]

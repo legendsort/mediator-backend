@@ -6,7 +6,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework import viewsets, status
 
 import Paper.serializers
-from Paper.models import Journal, Publisher, Country, ReviewType, Category, ProductType, Frequency
+from Paper.models import Journal, Publisher, Country, ReviewType, Category, ProductType, Frequency, Article
 from Paper.serializers import JournalSerializer, PublisherSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
@@ -14,6 +14,7 @@ from Bank.views import StandardResultsSetPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework_tricks import filters
 from Paper.policies import PublisherAccessPolicy
+from Paper.helper import filter_params
 
 
 # Journal API
@@ -35,22 +36,105 @@ class JournalViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, ]
     queryset = Journal.objects.all()
 
+    def get_base_data(self):
+        return filter_params(self.request.data, [
+            'name',
+            'description',
+            'issn',
+            'impact_factor',
+            'open_access',
+            'flag',
+            'eissn',
+            'guide_url',
+            'logo_url',
+            'url',
+            'start_year',
+        ])
+
     def create(self, request, *args, **kwargs):
         try:
-            serializer = JournalSerializer(data=request.data)
-            print(serializer.is_valid())
-            print(serializer.errors)
+            base_data = self.get_base_data()
+            serializer = JournalSerializer(data=base_data)
+            if serializer.is_valid():
+                serializer.save()
+                countries = request.data.getlist('countries')
+                products = request.data.getlist('products')
+                categories = request.data.getlist('categories')
+                journal = serializer.instance
+                journal.assign_product(products)
+                journal.assign_country(countries)
+                journal.assign_category(categories)
+                if request.data.get('review_type') and ReviewType.objects.filter(pk=int(request.data.get('review_type'))).exists():
+                    journal.review_type = ReviewType.objects.get(pk=int(request.data.get('review_type')))
+                if request.data.get('frequency') and Frequency.objects.filter(
+                        pk=int(request.data.get('frequency'))).exists():
+                    journal.frequency = Frequency.objects.get(pk=int(request.data.get('frequency')))
+                if request.data.get('publisher') and Publisher.objects.filter(
+                        pk=int(request.data.get('publisher'))).exists():
+                    journal.publisher = Publisher.objects.get(pk=int(request.data.get('publisher')))
+                journal.save()
+            else:
+                print(serializer.errors)
+                return JsonResponse({
+                    'response_code': False,
+                    'data': serializer.errors,
+                    'message': 'Duplicated name'
+                })
             return JsonResponse({
                 'response_code': True,
-                'data': [],
-                'message': 'Successfully removed!'
+                'data': serializer.data,
+                'message': 'Successfully created!'
             })
+        except Exception as e:
+            print('----', e)
+            if journal:
+                journal.delete()
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Failed create journal'
+            })
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = JournalSerializer(instance, data=self.get_base_data(), partial=True)
+            if serializer.is_valid():
+                if request.data.getlist('products') is not []:
+                    instance.assign_product(request.data.getlist('products'))
+                if request.data.getlist('countries') is not []:
+                    instance.assign_country(request.data.getlist('countries'))
+                if request.data.getlist('categories') is not []:
+                    instance.assign_category(request.data.getlist('categories'))
+                if request.data.get('review_type') and ReviewType.objects.filter(
+                        pk=int(request.data.get('review_type'))).exists():
+                    instance.review_type = ReviewType.objects.get(pk=int(request.data.get('review_type')))
+                if request.data.get('frequency') and Frequency.objects.filter(
+                        pk=int(request.data.get('frequency'))).exists():
+                    instance.frequency = Frequency.objects.get(pk=int(request.data.get('frequency')))
+                if request.data.get('publisher') and Publisher.objects.filter(
+                        pk=int(request.data.get('publisher'))).exists():
+                    instance.publisher = Publisher.objects.get(pk=int(request.data.get('publisher')))
+                serializer.save()
+                instance.save()
+            else:
+                return JsonResponse({
+                    'response_code': False,
+                    'data': [],
+                    'message': serializer.errors
+                })
+            return JsonResponse({
+                'response_code': False,
+                'data': serializer.data,
+                'message': 'Duplicated name'
+            })
+            pass
         except Exception as e:
             print(e)
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': 'Failed create journal'
+                'message': 'server has error'
             })
 
     # remove journal element
@@ -62,7 +146,8 @@ class JournalViewSet(viewsets.ModelViewSet):
                 'data': [],
                 'message': 'Successfully removed!'
             })
-        except django.db.DatabaseError:
+        except django.db.DatabaseError as e:
+            print(e)
             return JsonResponse({
                 'response_code': False,
                 'data': [],
@@ -287,3 +372,37 @@ class CategoryViewSet(viewsets.ModelViewSet):
                 'message': 'Can not remove this publisher'
             })
 
+
+# Categories API
+class ArticleFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
+    class Meta:
+        model = Article
+        fields = {
+            'name': ['icontains']
+        }
+
+
+class ArticleViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = Paper.serializers.ArticleSerializer
+    pagination_class = StandardResultsSetPagination
+    renderer_classes = [JSONResponseRenderer, ]
+    filter_backends = [DjangoFilterBackend, ]
+    filterset_class = ArticleFilter
+    queryset = Article.objects.all()
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            self.perform_destroy(self.get_object())
+            return JsonResponse({
+                'response_code': True,
+                'data': [],
+                'message': 'Successfully removed!'
+            })
+        except django.db.DatabaseError:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Can not remove this publisher'
+            })

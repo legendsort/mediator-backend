@@ -16,6 +16,7 @@ router.register(r'review-type', ReviewTypeViewSet, basename='review-type')
 router.register(r'article', ArticleViewSet, basename='article')
 router.register(r'submit', Paper.views.SubmitViewSet, basename='submit')
 router.register(r'status', Paper.views.StatusViewSet, basename='status')
+router.register(r'requirement', Paper.views.RequirementViewSet, basename='requirement')
 
 urlpatterns = [
     path(r'', include(router.urls))

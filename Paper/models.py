@@ -1,4 +1,6 @@
+import django.db
 from django.db import models
+
 from Account.models import TimeStampMixin
 from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
@@ -157,11 +159,17 @@ class Article(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True)
 
+    def __str__(self):
+        return self.name
+
 
 class Requirement(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True)
     file_type = models.CharField(max_length=192, null=True)
+
+    def __str__(self):
+        return self.name
 
 
 class Order(TimeStampMixin):
@@ -192,14 +200,73 @@ class Submit(TimeStampMixin):
     keywords = models.TextField(null=True)
     major = models.TextField(null=True)
     user = models.ForeignKey('Account.User', on_delete=models.DO_NOTHING, related_name='submit_user', null=True)
+    contactor = models.ForeignKey('Account.User', on_delete=models.DO_NOTHING, related_name='submit_contactor', null=True)
     journal = models.ForeignKey(Journal, on_delete=models.DO_NOTHING, related_name='submit_journal', null=True)
+    status = models.ForeignKey(Status, on_delete=models.DO_NOTHING, related_name='submit_status', null=True)
+
+    def get_upload_files(self):
+        return UploadFile.objects.filter(submit=self)
+
+    def set_upload_files(self, files, require_ids):
+        index = 0
+        error = []
+        for file in files:
+            try:
+                m_file = UploadFile()
+                m_file.file = file
+                m_file.name = str(file)
+                m_file.submit = self
+                m_file.requirement = Requirement.objects.get(pk=require_ids[index])
+                if UploadFile.objects.filter(submit=self, requirement=m_file.requirement).exists():
+                    UploadFile.objects.filter(submit=self, requirement=m_file.requirement).delete()
+                m_file.save()
+            except Requirement.DoesNotExist:
+                error.append('incorrect requirement id')
+                continue
+            except django.db.DatabaseError:
+                error.append('duplicated')
+            index += index
+        return True
+
+    def get_authors(self):
+        return Author.objects.filter(submit=self)
+
+    def set_authors(self, authors):
+        import Paper.serializers
+        errors = []
+        try:
+            for author in authors:
+                author['type'] = 'author'
+                try:
+                    serializer = Paper.serializers.AuthorSerializer(data=author)
+                    if serializer.is_valid():
+                        serializer.save()
+                        serializer.instance.submit = self
+                        serializer.instance.save()
+                    else:
+                        errors.append(serializer.errors)
+                        continue
+                    pass
+                except django.db.DatabaseError as e:
+                    print(e)
+                    continue
+        except Exception as e:
+            print('add author to submit', e)
+            return errors
+        return errors
 
 
 class UploadFile(TimeStampMixin):
     name = models.CharField(max_length=255)
     requirement = models.ForeignKey(Requirement, on_delete=models.CASCADE, related_name='submit_upload_paper_type')
-    submit = models.ForeignKey(Submit, on_delete=models.CASCADE, related_name='submit_uploaded_paper')
     file = models.FileField(upload_to=submit_upload_path)
+    submit = models.ForeignKey(Submit, on_delete=models.DO_NOTHING, related_name='submit_upload_file', null=True)
+
+    class Meta:
+        unique_together = ('requirement', 'submit',)
+
+    def __str__(self):
+        return str(self.file)
 
 
 class Resource(TimeStampMixin):
@@ -227,7 +294,7 @@ class Author(TimeStampMixin):
     position = models.CharField(max_length=255, null=True)
     country = models.ForeignKey(Country, on_delete=models.DO_NOTHING, null=True)
     reason = models.CharField(max_length=255, null=True)
-    submit = models.ForeignKey(Submit, on_delete=models.DO_NOTHING, related_name='submit_author')
+    submit = models.ForeignKey(Submit, on_delete=models.DO_NOTHING, related_name='submit_author', null=True)
     type = models.CharField(max_length=12, choices=AuthorType.choices, default=AuthorType.AUTHOR, )
     appellation = models.CharField(max_length=12,
                                    choices=Appellation.choices,

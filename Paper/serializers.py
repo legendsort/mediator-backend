@@ -1,8 +1,6 @@
 from rest_framework import serializers
-
-import Account.serializers
-import Paper.models
-from Paper.models import Journal, ReviewType, Country, ProductType, Frequency, Category, Publisher, Article
+from Paper.models import Journal, ReviewType, Country, ProductType, Frequency, Category,\
+    Publisher, Article, Submit, Order, Author, Status, Requirement, UploadFile
 
 
 class FrequencySerializer(serializers.ModelSerializer):
@@ -119,24 +117,68 @@ class ArticleSerializer(serializers.ModelSerializer):
         ]
 
 
-class SubmitSerializer(serializers.ModelSerializer):
-    user = Account.serializers.UserSerializer(read_only=True)
-    article = ArticleSerializer(read_only=True)
+class AuthorSerializer(serializers.ModelSerializer):
+    country = serializers.StringRelatedField(read_only=True)
+    email = serializers.EmailField()
 
     class Meta:
-        model = Paper.models.Submit
+        model = Author
+        fields = [
+            'first_name',
+            'last_name',
+            'position',
+            'reason',
+            'email',
+            'appellation',
+            'type',
+            'country',
+        ]
+
+
+class UploadFileSerializer(serializers.ModelSerializer):
+    requirement = serializers.StringRelatedField()
+
+    class Meta:
+        model = UploadFile
+        fields = [
+            'id',
+            'requirement',
+            'file',
+            'name'
+        ]
+
+
+class SubmitSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+    contactor = serializers.StringRelatedField(read_only=True)
+    article = serializers.StringRelatedField(read_only=True)
+    abstract = serializers.CharField(required=True)
+    keywords = serializers.CharField(required=True)
+    journal = serializers.StringRelatedField(read_only=True)
+    authors = AuthorSerializer(source='get_authors',  read_only=True, many=True)
+    upload_files = UploadFileSerializer(source='get_upload_files',  read_only=True, many=True)
+
+    class Meta:
+        model = Submit
         fields = [
             'id',
             'user',
             'article',
-            'title'
+            'title',
+            'abstract',
+            'keywords',
+            'major',
+            'journal',
+            'contactor',
+            'authors',
+            'upload_files'
         ]
 
 
 class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Paper.models.Order
+        model = Order
         fields = [
             'id',
         ]
@@ -145,8 +187,20 @@ class OrderSerializer(serializers.ModelSerializer):
 class StatusSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Paper.models.Status
+        model = Status
         fields = [
             'id',
             'name',
         ]
+
+
+class RequirementSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Requirement
+        fields = [
+            'id',
+            'name',
+        ]
+
+

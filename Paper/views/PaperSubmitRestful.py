@@ -1,4 +1,8 @@
+import json
+
 import django.db.utils
+import rest_framework.exceptions
+from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -77,14 +81,40 @@ class SubmitViewSet(viewsets.ModelViewSet):
             'article_id',
         ])
 
+    # new submit paper request
     def create(self, request, *args, **kwargs):
         try:
-            base_data = self.get_base_data()
-            serializer = self.serializer_class(data=base_data)
+            serializer = self.serializer_class(data=request.data)
             if serializer.is_valid():
-
+                request_data = request.data
+                journal_id = request_data.get('journal_id')
+                article_id = request_data.get('article_id')
+                authors = request.data.get('authors')
+                upload_files = request.data.getlist('files')
+                upload_files_key = request.data.getlist('files_requirement')
+                if not journal_id or not Journal.objects.filter(pk=journal_id).exists():
+                    raise ValidationError('journal_id')
+                if not article_id or not Article.objects.filter(pk=article_id).exists():
+                    raise ValidationError('article_id')
+                if not authors or type(authors) is not str:
+                    raise ValidationError('authors')
+                if not upload_files:
+                    raise ValidationError('upload_files')
                 serializer.save()
                 instance = serializer.instance
+                instance.article = Article.objects.get(pk=article_id)
+                instance.journal = Journal.objects.get(pk=journal_id)
+                authors = json.loads(authors)
+                result = instance.set_authors(authors)
+
+                if len(result):
+                    instance.delete()
+                    return JsonResponse({
+                        'response_code': False,
+                        'data': result,
+                        'message': 'Your submit has some errors. Please check details'
+                    })
+                instance.set_upload_files(upload_files, upload_files_key)
                 instance.user = request.user
                 instance.save()
             else:
@@ -92,17 +122,21 @@ class SubmitViewSet(viewsets.ModelViewSet):
                 return JsonResponse({
                     'response_code': False,
                     'data': serializer.errors,
-                    'message': 'Duplicated name'
+                    'message': 'Your submit has some errors. Please check details'
                 })
             return JsonResponse({
                 'response_code': True,
                 'data': serializer.data,
                 'message': 'Successfully created!'
             })
+        except ValidationError as e:
+            return JsonResponse({
+                'response_code': False,
+                'data': str(e.message),
+                'message': f"Your submit has some errors. Please check details {str(e.message)}"
+            })
         except Exception as e:
             print('----', e)
-            if instance:
-                instance.delete()
             return JsonResponse({
                 'response_code': False,
                 'data': [],
@@ -112,39 +146,19 @@ class SubmitViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = JournalSerializer(instance, data=self.get_base_data(), partial=True)
-            if serializer.is_valid():
-                if request.data.getlist('products') is not []:
-                    instance.assign_product(request.data.getlist('products'))
-                if request.data.getlist('countries') is not []:
-                    instance.assign_country(request.data.getlist('countries'))
-                if request.data.getlist('categories') is not []:
-                    instance.assign_category(request.data.getlist('categories'))
-                if request.data.get('review_type') and ReviewType.objects.filter(
-                        pk=int(request.data.get('review_type'))).exists():
-                    instance.review_type = ReviewType.objects.get(pk=int(request.data.get('review_type')))
-                if request.data.get('frequency') and Frequency.objects.filter(
-                        pk=int(request.data.get('frequency'))).exists():
-                    instance.frequency = Frequency.objects.get(pk=int(request.data.get('frequency')))
-                if request.data.get('publisher') and Publisher.objects.filter(
-                        pk=int(request.data.get('publisher'))).exists():
-                    instance.publisher = Publisher.objects.get(pk=int(request.data.get('publisher')))
-                serializer.save()
-                instance.save()
-            else:
-                return JsonResponse({
-                    'response_code': False,
-                    'data': [],
-                    'message': serializer.errors
-                })
             return JsonResponse({
                 'response_code': False,
-                'data': serializer.data,
+                'data': [],
                 'message': 'Duplicated name'
             })
-            pass
+        except django.http.response.Http404:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Not Found'
+            })
         except Exception as e:
-            print(e)
+            print(type(e))
             return JsonResponse({
                 'response_code': False,
                 'data': [],

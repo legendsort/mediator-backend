@@ -151,7 +151,7 @@ class JournalViewSet(viewsets.ModelViewSet):
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': 'Can not remove this publisher'
+                'message': 'Can not remove this  instance'
             })
 
 
@@ -189,7 +189,7 @@ class PublisherViewSet(viewsets.ModelViewSet):
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': 'Can not remove this publisher'
+                'message': 'Can not remove this  instance'
             })
 
 
@@ -225,7 +225,7 @@ class CountryViewSet(viewsets.ModelViewSet):
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': 'Can not remove this publisher'
+                'message': 'Can not remove this  instance'
             })
 
 
@@ -261,7 +261,7 @@ class ReviewTypeViewSet(viewsets.ModelViewSet):
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': 'Can not remove this publisher'
+                'message': 'Can not remove this  instance'
             })
 
 
@@ -297,7 +297,7 @@ class FrequencyViewSet(viewsets.ModelViewSet):
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': 'Can not remove this publisher'
+                'message': 'Can not remove this  instance'
             })
 
 
@@ -333,7 +333,7 @@ class ProductTypeViewSet(viewsets.ModelViewSet):
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': 'Can not remove this publisher'
+                'message': 'Can not remove this  instance'
             })
 
 
@@ -369,7 +369,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': 'Can not remove this publisher'
+                'message': 'Can not remove this  instance'
             })
 
 
@@ -404,7 +404,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': 'Can not remove this publisher'
+                'message': 'Can not remove this  instance'
             })
 
 
@@ -440,5 +440,41 @@ class StatusViewSet(viewsets.ModelViewSet):
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': 'Can not remove this publisher'
+                'message': 'Can not remove this  instance'
+            })
+
+
+# Requirement API
+class RequirementFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
+
+    class Meta:
+        model = Paper.models.Requirement
+        fields = {
+            'name': ['icontains']
+        }
+
+
+class RequirementViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = Paper.serializers.RequirementSerializer
+    pagination_class = StandardResultsSetPagination
+    renderer_classes = [JSONResponseRenderer, ]
+    filter_backends = [DjangoFilterBackend, ]
+    filterset_class = RequirementFilter
+    queryset = Paper.models.Requirement.objects.all()
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            self.perform_destroy(self.get_object())
+            return JsonResponse({
+                'response_code': True,
+                'data': [],
+                'message': 'Successfully removed!'
+            })
+        except django.db.DatabaseError:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Can not remove this  instance'
             })

@@ -1,4 +1,4 @@
-from Bank.service import BankService
+from Bank.services import BankService
 
 
 def run_fetch_bank_data():

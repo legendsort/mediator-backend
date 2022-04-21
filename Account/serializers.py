@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from Account.models import Role, Permission, User
+from Account.models import Role, Permission, User, BusinessType, Unit
 from django.apps import apps
 
 
@@ -12,15 +12,55 @@ class PermissionSerializer(serializers.ModelSerializer):
 
 # roles
 class RoleSerializer(serializers.ModelSerializer):
-    permissions = PermissionSerializer(many=True)
+    permissions = PermissionSerializer(many=True, read_only=True)
 
     class Meta:
         model = Role
         fields = ['id', 'name', 'codename', 'permissions']
 
 
+# Business type
+class BusinessSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = BusinessType
+        fields = ['id', 'name', 'codename', 'description', ]
+
+
+# Unit
+class UnitSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Unit
+        fields = ['id', 'name',]
+
+
 # User serializer
 class UserSerializer(serializers.ModelSerializer):
+    role = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'username',
+            'role'
+        ]
+
+
+class UserOutSideSerializer(serializers.ModelSerializer):
+    role = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'username',
+            'role'
+        ]
+
+
+class UserDetailSerializer(serializers.ModelSerializer):
     role = RoleSerializer(read_only=True)
 
     class Meta:
@@ -30,3 +70,4 @@ class UserSerializer(serializers.ModelSerializer):
             'username',
             'role'
         ]
+

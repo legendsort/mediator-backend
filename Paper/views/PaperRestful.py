@@ -8,7 +8,7 @@ from Paper.models import Journal, Publisher, Country, ReviewType, Category, Prod
 from Paper.serializers import JournalSerializer, PublisherSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
-from Bank.views import StandardResultsSetPagination
+from Paper.helper import StandardResultsSetPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework_tricks import filters
 from Paper.policies import PublisherAccessPolicy

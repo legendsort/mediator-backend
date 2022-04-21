@@ -8,7 +8,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from Bank.serializers import DataSerializer
 from Bank.models import Data, DataType
-from Bank.service import BankService
+from Bank.services import BankService
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from dateutil.relativedelta import relativedelta

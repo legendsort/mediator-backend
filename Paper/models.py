@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from Paper.helper import publisher_logo_path, journal_resource_path, submit_upload_path
-
+from django.apps import apps
 
 # Create your models here.
 class ReviewType(models.Model):
@@ -149,6 +149,7 @@ class Journal(TimeStampMixin):
 
 class Status(models.Model):
     name = models.CharField(max_length=255, unique=True)
+    codename = models.CharField(max_length=255, null=True)
     description = models.TextField(null=True)
 
     def __str__(self):
@@ -173,8 +174,8 @@ class Requirement(models.Model):
 
 
 class Order(TimeStampMixin):
-    type = models.ForeignKey('Account.BusinessType', on_delete=models.DO_NOTHING, related_name='order_type')
-    user = models.ForeignKey('Account.User', on_delete=models.DO_NOTHING, related_name='order_user')
+    type = models.ForeignKey('Account.BusinessType', on_delete=models.CASCADE, related_name='order_type')
+    user = models.ForeignKey('Account.User', on_delete=models.CASCADE, related_name='order_user')
     status = models.ForeignKey(Status, on_delete=models.DO_NOTHING, related_name='order_status', null=True)
     product = GenericForeignKey()
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
@@ -200,7 +201,7 @@ class Submit(TimeStampMixin):
     keywords = models.TextField(null=True)
     major = models.TextField(null=True)
     user = models.ForeignKey('Account.User', on_delete=models.DO_NOTHING, related_name='submit_user', null=True)
-    contactor = models.ForeignKey('Account.User', on_delete=models.DO_NOTHING, related_name='submit_contactor', null=True)
+    dealer = models.ForeignKey('Account.User', on_delete=models.DO_NOTHING, related_name='submit_dealer', null=True)
     journal = models.ForeignKey(Journal, on_delete=models.DO_NOTHING, related_name='submit_journal', null=True)
     status = models.ForeignKey(Status, on_delete=models.DO_NOTHING, related_name='submit_status', null=True)
 
@@ -220,12 +221,14 @@ class Submit(TimeStampMixin):
                 if UploadFile.objects.filter(submit=self, requirement=m_file.requirement).exists():
                     UploadFile.objects.filter(submit=self, requirement=m_file.requirement).delete()
                 m_file.save()
+
+                index += 1
             except Requirement.DoesNotExist:
                 error.append('incorrect requirement id')
                 continue
             except django.db.DatabaseError:
                 error.append('duplicated')
-            index += index
+
         return True
 
     def get_authors(self):
@@ -255,12 +258,25 @@ class Submit(TimeStampMixin):
             return errors
         return errors
 
+    def set_order(self) -> Order:
+        if Order.objects.filter(order_submit=self).exists():
+            return Order.objects.get(order_submit=self)
+        else:
+            order = Order()
+            order.type = apps.get_model('Account.BusinessType').objects.get(codename='paper')
+            order.user = self.user
+            order.status = self.status
+            order.product = self
+            order.save()
+            order.status_logs.add(self.status)
+            return order
+
 
 class UploadFile(TimeStampMixin):
     name = models.CharField(max_length=255)
     requirement = models.ForeignKey(Requirement, on_delete=models.CASCADE, related_name='submit_upload_paper_type')
     file = models.FileField(upload_to=submit_upload_path)
-    submit = models.ForeignKey(Submit, on_delete=models.DO_NOTHING, related_name='submit_upload_file', null=True)
+    submit = models.ForeignKey(Submit, on_delete=models.CASCADE, related_name='submit_upload_file', null=True)
 
     class Meta:
         unique_together = ('requirement', 'submit',)
@@ -292,9 +308,9 @@ class Author(TimeStampMixin):
     last_name = models.CharField(max_length=255, null=True)
     email = models.CharField(max_length=255, null=True)
     position = models.CharField(max_length=255, null=True)
-    country = models.ForeignKey(Country, on_delete=models.DO_NOTHING, null=True)
+    country = models.ForeignKey(Country, on_delete=models.CASCADE, null=True)
     reason = models.CharField(max_length=255, null=True)
-    submit = models.ForeignKey(Submit, on_delete=models.DO_NOTHING, related_name='submit_author', null=True)
+    submit = models.ForeignKey(Submit, on_delete=models.CASCADE, related_name='submit_author', null=True)
     type = models.CharField(max_length=12, choices=AuthorType.choices, default=AuthorType.AUTHOR, )
     appellation = models.CharField(max_length=12,
                                    choices=Appellation.choices,

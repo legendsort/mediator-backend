@@ -1,3 +1,5 @@
+from abc import ABC
+
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework_simplejwt.views import (
@@ -22,6 +24,7 @@ class TokenObtainPairResponseSerializer(serializers.Serializer):
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)

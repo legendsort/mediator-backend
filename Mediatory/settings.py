@@ -218,7 +218,8 @@ Q_CLUSTER = {
     'redis': {
         'host': '192.168.4.81',
         'port': 6379,
-        'db': 0, }
+        'db': 0,
+    }
 }
 
 JAZZMIN_SETTINGS = {
@@ -357,4 +358,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'Account.User'
 BANK_API_BASE_URL = env('BANK_API_BASE_URL')
 MEDIATOR_SERVICE_API_BASE_URL = env('MEDIATOR_SERVICE_API_BASE_URL')
-
+NIS_SEND_DIR_PATH = env('NIS_SEND_DIR_PATH')
+NIS_RECEIVE_DIR_PATH = env('NIS_RECEIVE_DIR_PATH')

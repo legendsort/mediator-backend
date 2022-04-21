@@ -2,8 +2,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework import viewsets
-from Account.service import MediatorService
+from Account.services import MediatorService
 from rest_framework_simplejwt.tokens import RefreshToken
+from Account.views import MyTokenObtainPairSerializer
 
 
 class MediatorViewSet(viewsets.ViewSet):
@@ -19,8 +20,8 @@ class MediatorViewSet(viewsets.ViewSet):
     def connect_mediator(self, request, pk=None):
         try:
 
-            refresh = RefreshToken.for_user(self.request.user)
-            service = MediatorService(token=str(refresh.access_token))
+            MyTokenObtainPairSerializer.get_token(self.request.user)
+            service = MediatorService(token=str(MyTokenObtainPairSerializer.get_token(self.request.user)))
             response_code, response = service.connect()
             return Response({
                 'response_code': response_code,

@@ -1,13 +1,14 @@
 from django.db import models
 
 # Create your models here.
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, AbstractUser, Permission
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, AbstractUser
 from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from Account.managers import UserManager
 from django.utils.translation import gettext_lazy as _
 import hashlib
+from django.utils import timezone
 
 
 class TimeStampMixin(models.Model):
@@ -25,6 +26,9 @@ class Permission(models.Model):
     def __str__(self):
         return self.name
 
+    def get_codename(self) -> str:
+        return self.codename
+
 
 class Role(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -39,6 +43,9 @@ class Role(models.Model):
     def __str__(self):
         return self.name
 
+    def get_codename(self) -> str:
+        return self.codename
+
 
 class Unit(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -52,8 +59,11 @@ class Membership(models.Model):
     role = models.ForeignKey(Role, on_delete=models.CASCADE)
     permission = models.ForeignKey(Permission, on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = ['role', 'permission']
 
-class User(AbstractBaseUser, PermissionsMixin):
+
+class User(AbstractBaseUser, PermissionsMixin, TimeStampMixin):
     username = models.CharField(max_length=192, unique=True)
     real_name = models.CharField(max_length=255, null=True)
     is_active = models.BooleanField(default=False)
@@ -62,6 +72,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     ip_address = models.GenericIPAddressField(default='0.0.0.0')
     is_online = models.BooleanField(default=False)
     is_remove = models.BooleanField(default=False)
+    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, null=True)
     profile = GenericForeignKey()
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
     object_id = models.PositiveIntegerField(null=True)
@@ -78,7 +89,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         self.save()
         return True
 
-    def has_perm(self, perm, obj=None):
+    def has_perm(self, perm: str, obj=None):
         if self.is_active and self.is_superuser:
             return True
         if not self.role or not self.role.permissions:
@@ -87,8 +98,11 @@ class User(AbstractBaseUser, PermissionsMixin):
             return True
         return False
 
-    def has_perms(self, perm_list, obj=None):
-        return all(self.has_perm(perm, obj) for perm in perm_list)
+    def has_perms(self, perms: dict, obj=None):
+        return all(self.has_perm(perm, obj) for perm in perms)
+
+    def assign_perms(self, perms: dict):
+        pass
 
 
 class CustomerProfile(models.Model):
@@ -105,12 +119,13 @@ class CustomerProfile(models.Model):
 
 class BusinessType(models.Model):
     name = models.CharField(max_length=255, unique=True)
+    codename = models.CharField(max_length=255, unique=True, null=True)
     description = models.TextField(max_length=1024)
 
 
 class RemoteAccount(models.Model):
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user_remote_account')
-    type = models.ForeignKey(BusinessType, on_delete=models.DO_NOTHING, related_name='user_account_business')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_remote_account')
+    type = models.ForeignKey(BusinessType, on_delete=models.CASCADE, related_name='user_account_business')
     username = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
     host = models.CharField(max_length=255)
@@ -119,7 +134,7 @@ class RemoteAccount(models.Model):
 
 
 class Log(TimeStampMixin):
-    type = models.ForeignKey(BusinessType, on_delete=models.DO_NOTHING, related_name='log_type')
+    type = models.ForeignKey(BusinessType, on_delete=models.CASCADE, related_name='log_type')
     date = models.DateField(auto_now_add=True)
     logs = models.JSONField(null=True)
 
@@ -170,10 +185,3 @@ class Notice(TimeStampMixin):
 def user_directory_path(instance, filename):
     return f"upload/{hashlib.md5(str(instance.user.id).encode('utf-8')).hexdigest()}/{filename}"
 
-
-class Upload(TimeStampMixin):
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user_upload')
-    file = models.FileField(blank=False, null=False, upload_to=user_directory_path)
-    submit = models.ForeignKey('Paper.Submit', on_delete=models.DO_NOTHING, null=True, related_name='user_upload')
-    is_upload = models.BooleanField(default=False)
-    # article = models.ForeignKey('Paper.Article', on_delete=models.DO_NOTHING, null=True, related_name='article')

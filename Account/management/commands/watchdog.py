@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from Account.service import WatchService, Handler
+from Account.services import WatchService, Handler
 
 
 class Command(BaseCommand):

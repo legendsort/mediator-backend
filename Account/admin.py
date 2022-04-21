@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from Account.models import User, Role, Permission, Membership
+from Account.models import User, Role, Permission, Membership, BusinessType
 from Account.forms import CustomUserCreationForm, CustomUserChangeForm
 # Register your models here.
 
@@ -40,5 +40,8 @@ class PermissionAdmin(admin.ModelAdmin):
     inlines = (MembershipInline,)
 
 
+@admin.register(BusinessType)
+class BusinessAdmin(admin.ModelAdmin):
+    list_display = ('name', 'codename',)
 
 

@@ -1,4 +1,7 @@
+import datetime
 import json
+import os
+from os.path import basename
 import requests as req
 from django.conf import settings
 from django_q.tasks import async_task
@@ -10,6 +13,9 @@ from Account.message import Error
 import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from django.conf import settings
+import uuid
+import glob
 
 
 class APIBaseService:
@@ -63,8 +69,10 @@ class APIBaseService:
             return False, 'unknown error'
 
 
+# Connecting API to mediator service
 class MediatorService(APIBaseService):
     def __init__(self, token=None):
+        super().__init__(token)
         self.base_url = getattr(settings, 'MEDIATOR_SERVICE_API_BASE_URL', '')
         self.headers = {
             'Content-Type': 'application/json',
@@ -78,6 +86,7 @@ class MediatorService(APIBaseService):
         return self.call(url=url)
 
 
+# Notify to user via channels
 class NotificationService:
     def __init__(self, user=AnonymousUser()):
         self.user = user
@@ -142,3 +151,64 @@ class Handler(FileSystemEventHandler):
 
     def on_deleted(self, event):
         pass
+
+
+# Gateway service for connecting gateway service with different api
+class GatewayService(NotificationService):
+    NIS_SEND_DIR_PATH = getattr(settings, 'NIS_SEND_DIR_PATH', '/media')
+    NIS_RECEIVE_DIR_PATH = getattr(settings, 'NIS_RECEIVE_DIR_PATH', '/media')
+
+    def __init__(self, user=AnonymousUser()):
+        super().__init__(user)
+        self.request_id = str(uuid.uuid4())
+        self.time_interval = 1
+
+    def send_request(self, action: str = '', data=None, is_async=False):
+        request_data = {
+            'action': action,
+            'data': data,
+            'async': is_async
+        }
+        if not self.make_request(request_data):
+            return False
+        if is_async:
+            pass
+        else:
+            return self.wait_for_getting_file()
+
+    def wait_with_timeout(self, wait_time: int = 3):
+        pass
+
+    def deal_with_res_data(self, data):
+        pass
+
+    def get_receive_response_file_list(self):
+        path = f"{self.NIS_RECEIVE_DIR_PATH}/*.json"
+        files = glob.glob(path, recursive=True)
+        try:
+            for file_path in files:
+                if f"{self.request_id}.json" == basename(file_path):
+                    with open(file_path) as res_file:
+                        data_loaded = json.load(res_file)
+                        return data_loaded
+            return False
+        except Exception as e:
+            print('json dump error', e)
+            return False
+
+    def wait_for_getting_file(self):
+        start_time = datetime.datetime.now()
+        while True:
+            diff = (datetime.datetime.now() - start_time).seconds
+            time.sleep(self.time_interval)
+            res_data = self.get_receive_response_file_list()
+            if res_data:
+                return res_data
+            if diff > 60:
+                break
+        return False
+
+    def make_request(self, data):
+        with open(f"{self.NIS_SEND_DIR_PATH}/{self.request_id}.json", 'w', encoding='utf-8') as request_json_file:
+            request_json_file.write(json.dumps(data, ensure_ascii=False))
+            return True

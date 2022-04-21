@@ -1,4 +1,4 @@
-from Account.service import APIBaseService
+from Account.services import APIBaseService
 from django.conf import settings
 
 

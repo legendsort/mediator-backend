@@ -1,7 +1,8 @@
 import json
-
+from rest_framework.decorators import action
 import django.db.utils
 import rest_framework.exceptions
+from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -9,15 +10,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets, status
 import Paper.serializers
 from Paper.models import Journal, Publisher, Country, ReviewType, Submit, UploadFile, Requirement,\
-    Order, Frequency, Article
+    Order, Frequency, Article, Status
 from Paper.serializers import JournalSerializer, PublisherSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
 from Bank.views import StandardResultsSetPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework_tricks import filters
-from Paper.policies import PublisherAccessPolicy
+from Paper.policies import PublisherAccessPolicy, SubmissionAccessPolicy
 from Paper.helper import filter_params
+from Paper.services import SubmissionService
 
 
 # Order API
@@ -67,7 +69,7 @@ class SubmitFilter(django_filters.FilterSet):
 
 
 class SubmitViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, SubmissionAccessPolicy]
     serializer_class = Paper.serializers.SubmitSerializer
     pagination_class = StandardResultsSetPagination
     filterset_class = SubmitFilter
@@ -80,6 +82,20 @@ class SubmitViewSet(viewsets.ModelViewSet):
             'title',
             'article_id',
         ])
+
+    # Query set for submission
+    def get_queryset(self):
+        user = self.request.user
+        if user.has_perm('administrator') or user.has_perm('manage_paper'):
+            return Submit.objects.all()
+        elif user.has_perm('view_paper'):
+            return Submit.objects.filter(user=user)
+        elif user.has_perm('mediate_paper'):
+            return Submit.objects.filter(Q(dealer=user) | Q(dealer=None))
+        elif user.has_perm('manage_unit_paper'):
+            return Submit.objects.filter(user__unit=user.unit)
+        else:
+            return Submit.objects.filter(pk=None)
 
     # new submit paper request
     def create(self, request, *args, **kwargs):
@@ -116,7 +132,10 @@ class SubmitViewSet(viewsets.ModelViewSet):
                     })
                 instance.set_upload_files(upload_files, upload_files_key)
                 instance.user = request.user
+                instance.status = Status.objects.get(name='New Submission')
                 instance.save()
+                instance.set_order()
+                print(instance.order.first())
             else:
                 print(serializer.errors)
                 return JsonResponse({
@@ -146,10 +165,40 @@ class SubmitViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            if instance.status == Status.objects.get(name='New Submission') and not instance.dealer:
+                request_data = request.data
+                instance.title = request_data.get('title', instance.title)
+                instance.keywords = request_data.get('keywords', instance.keywords)
+                instance.abstract = request_data.get('abstract', instance.abstract)
+                instance.major = request_data.get('major', instance.major)
+                journal_id = request_data.get('journal_id')
+                article_id = request_data.get('article_id')
+                authors = request.data.get('authors')
+                upload_files = request.data.getlist('files')
+                upload_files_key = request.data.getlist('files_requirement')
+                if journal_id and Journal.objects.filter(pk=journal_id).exists():
+                    instance.journal = Journal.objects.get(pk=journal_id)
+                if article_id and Article.objects.filter(pk=article_id).exists():
+                    instance.article = Article.objects.get(pk=article_id)
+                if authors or type(authors) is str:
+                    authors = json.loads(authors)
+                if upload_files and upload_files_key:
+                    instance.set_upload_files(upload_files, upload_files_key)
+                instance.user = request.user
+                instance.save()
+                instance.set_order()
+                print(instance.order.first())
+            else:
+                return JsonResponse({
+                    'response_code': False,
+                    'data': [],
+                    'message': 'Cannot update this submission'
+                })
+
             return JsonResponse({
-                'response_code': False,
-                'data': [],
-                'message': 'Duplicated name'
+                'response_code': True,
+                'data':  self.serializer_class(instance).data,
+                'message': 'Submission has been updated'
             })
         except django.http.response.Http404:
             return JsonResponse({
@@ -180,5 +229,39 @@ class SubmitViewSet(viewsets.ModelViewSet):
                 'response_code': False,
                 'data': [],
                 'message': 'Can not remove this publisher'
+            })
+
+    # update submit status
+    @action(detail=True, methods=['post'], url_path='update-status')
+    def update_status(self, request, pk=None):
+        instance = self.get_object()
+
+    # accept submit for mediate
+    @action(detail=True, methods=['post'], url_path='accept')
+    def accept(self, request, pk=None):
+        instance = self.get_object()
+
+    # translate dealer
+    @action(detail=True, methods=['post'], url_path='transform')
+    def transform(self, request, pk=None):
+        instance = self.get_object()
+
+    # send information of submit
+    @action(detail=True, methods=['post'], url_path='send')
+    def send(self, request, pk=None):
+        instance = self.get_object()
+        submission_service = SubmissionService(instance)
+        res_data = submission_service.send()
+        if res_data:
+            return JsonResponse({
+                'response_code': True,
+                'data': res_data,
+                'message': 'Resource has been sent to mediator'
+            })
+        else:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Resource send has been failed'
             })
 

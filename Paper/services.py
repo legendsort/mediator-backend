@@ -91,9 +91,14 @@ class SubmissionService:
                 os.remove(f"{getattr(settings, 'NIS_SEND_DIR_PATH')}/{basename(self.zip_file_path)}")
             os.rename(self.zip_file_path, f"{getattr(settings, 'NIS_SEND_DIR_PATH')}/{basename(self.zip_file_path)}")
             gateway_service = GatewayService()
-            return gateway_service.send_request(action='upload_resource', data={
-                'user': 'paper_id', })
+            remote_user_root_path = getattr(settings, 'REMOTE_NEXTCLOUD_USER_ROOT_PATH')
+            request_data = {
+                'upload_path': f"{remote_user_root_path}/{self.submit.dealer.username}" if self.submit.dealer else '',
+                'file_name': basename(self.zip_file_path)
+            }
+            return gateway_service.send_request(action='upload_resource', data=request_data)
 
         except Exception as e:
             print('send_error', e)
             return False
+

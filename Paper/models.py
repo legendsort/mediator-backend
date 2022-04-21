@@ -191,6 +191,10 @@ class Order(TimeStampMixin):
 class OrderStatusLog(TimeStampMixin):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, null=True)
     status = models.ForeignKey(Status, on_delete=models.CASCADE, null=True)
+    message = models.TextField(null=True)
+
+    class Meta:
+        unique_together = ('order', 'status',)
 
 
 class Submit(TimeStampMixin):
@@ -270,6 +274,14 @@ class Submit(TimeStampMixin):
             order.save()
             order.status_logs.add(self.status)
             return order
+
+    def update_status(self, status, message=None):
+        self.status = status
+        order = self.set_order()
+        order.status = status
+        order.status_logs.add(self.status, through_defaults={'message': message})
+        order.save()
+        self.save()
 
 
 class UploadFile(TimeStampMixin):

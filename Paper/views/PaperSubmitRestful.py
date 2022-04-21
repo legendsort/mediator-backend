@@ -18,7 +18,7 @@ from Bank.views import StandardResultsSetPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework_tricks import filters
 from Paper.policies import PublisherAccessPolicy, SubmissionAccessPolicy
-from Paper.helper import filter_params
+from Paper.helper import filter_params, SubmissionStatus
 from Paper.services import SubmissionService
 
 
@@ -235,11 +235,54 @@ class SubmitViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='update-status')
     def update_status(self, request, pk=None):
         instance = self.get_object()
+        try:
+            message = request.data.get('message')
+            status_id = request.data.get('status_id')
+            instance.update_status(Status.objects.get(pk=status_id), message=message)
+            instance.save()
+            return JsonResponse({
+                'response_code': True,
+                'data': self.get_serializer(instance).data,
+                'message': 'Submission has been updated'
+            })
+        except Status.DoesNotExist:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Please submit correct status"
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Server has error"
+            })
 
     # accept submit for mediate
     @action(detail=True, methods=['post'], url_path='accept')
     def accept(self, request, pk=None):
         instance = self.get_object()
+        try:
+            user = request.user
+            instance.dealer = user
+            instance.update_status(Status.objects.get(name=SubmissionStatus.START_SUBMISSION),
+                                   message=f"Submission has been started by {user.username}")
+            instance.save()
+            return JsonResponse({
+                'response_code': True,
+                'data': self.get_serializer(instance).data,
+                'message': 'Submission has been accepted'
+            })
+        except Status.DoesNotExist:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': f"Submission has no {SubmissionStatus.START_SUBMISSION} status"
+            })
+        except Exception as e:
+            print(e)
+            pass
 
     # translate dealer
     @action(detail=True, methods=['post'], url_path='transform')
@@ -250,18 +293,23 @@ class SubmitViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='send')
     def send(self, request, pk=None):
         instance = self.get_object()
-        submission_service = SubmissionService(instance)
-        res_data = submission_service.send()
-        if res_data:
-            return JsonResponse({
-                'response_code': True,
-                'data': res_data,
-                'message': 'Resource has been sent to mediator'
-            })
-        else:
+        try:
+            submission_service = SubmissionService(instance)
+            res_data = submission_service.send()
+            if res_data:
+                return JsonResponse(res_data)
+            else:
+                return JsonResponse({
+                    'response_code': False,
+                    'data': [],
+                    'message': 'Resource send has been failed'
+                })
+        except Exception as e:
+            print('send error', e)
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': 'Resource send has been failed'
+                'message': 'Server has errors'
             })
+
 

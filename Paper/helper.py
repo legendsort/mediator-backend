@@ -1,6 +1,7 @@
 import hashlib
 import pathlib
 from rest_framework.pagination import PageNumberPagination
+from enum import Enum
 
 
 def filter_params(params, items):
@@ -27,3 +28,8 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 1000
+
+
+class SubmissionStatus:
+    NEW_SUBMISSION = 'New Submission'
+    START_SUBMISSION = 'Start Submission'

@@ -1,4 +1,5 @@
 from rest_access_policy import AccessPolicy
+from Paper.helper import SubmissionStatus
 
 
 class PublisherAccessPolicy(AccessPolicy):
@@ -21,13 +22,19 @@ class SubmissionAccessPolicy(AccessPolicy):
         {
             "action": ["list", "retrieve", "create", "update", "partial_update"],
             "principal": "*",
-            "condition": "has_perms:view_paper",
+            "condition_expression": ["has_perms:mediate_paper or has_perms:manage_paper or has_perms:view_paper"],
             "effect": "allow"
         },
         {
-            "action": ["update_status", "destroy"],
+            "action": ["update_status"],
             "principal": "*",
-            "condition": ["has_perms:manage_paper"],
+            "condition_expression": ["has_perms:mediate_paper or has_perms:manage_paper or has_perms:view_paper"],
+            "effect": "allow"
+        },
+        {
+            "action": ["destroy"],
+            "principal": "*",
+            "condition": ["can_destroy"],
             "effect": "allow"
         },
         {
@@ -37,6 +44,16 @@ class SubmissionAccessPolicy(AccessPolicy):
             "effect": "allow"
         },
     ]
+
+    def can_destroy(self, request, view, action, field: str) -> bool:
+        user = request.user
+        if user.has_perm('manage_paper'):
+            return True
+        elif user.has_perm('view_paper') and view.get_object().status.name == SubmissionStatus.NEW_SUBMISSION:
+            return True
+        else:
+            return False
+
 
     def has_perms(self, request, view, action, field: str) -> bool:
         user = request.user

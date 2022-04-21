@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from Paper.models import Journal, ReviewType, Country, ProductType, Frequency, Category,\
-    Publisher, Article, Submit, Order, Author, Status, Requirement, UploadFile
+    Publisher, Article, Submit, Order, Author, Status, Requirement, UploadFile, OrderStatusLog
 
 
 class FrequencySerializer(serializers.ModelSerializer):
@@ -157,6 +157,16 @@ class SubmitSerializer(serializers.ModelSerializer):
     journal = serializers.StringRelatedField(read_only=True)
     authors = AuthorSerializer(source='get_authors',  read_only=True, many=True)
     upload_files = UploadFileSerializer(source='get_upload_files',  read_only=True, many=True)
+    status = serializers.StringRelatedField(read_only=True)
+    message = serializers.SerializerMethodField(read_only=True)
+
+    def get_message(self, obj):
+        try:
+            order = obj.set_order()
+            return OrderStatusLog.objects.filter(status=obj.status, order=order).first().message
+
+        except Exception as e:
+            return ''
 
     class Meta:
         model = Submit
@@ -171,7 +181,9 @@ class SubmitSerializer(serializers.ModelSerializer):
             'journal',
             'contactor',
             'authors',
-            'upload_files'
+            'upload_files',
+            'status',
+            'message'
         ]
 
 

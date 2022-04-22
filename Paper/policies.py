@@ -38,6 +38,12 @@ class SubmissionAccessPolicy(AccessPolicy):
             "effect": "allow"
         },
         {
+            "action": ["transfer"],
+            "principal": "*",
+            "condition": ["can_transfer"],
+            "effect": "allow"
+        },
+        {
             "action": ["accept", "send"],
             "principal": "*",
             "condition_expression": ["has_perms:mediate_paper or has_perms:manage_paper"],
@@ -45,7 +51,7 @@ class SubmissionAccessPolicy(AccessPolicy):
         },
     ]
 
-    def can_destroy(self, request, view, action, field: str) -> bool:
+    def can_destroy(self, request, view, action, field: str = None) -> bool:
         user = request.user
         if user.has_perm('manage_paper'):
             return True
@@ -54,6 +60,14 @@ class SubmissionAccessPolicy(AccessPolicy):
         else:
             return False
 
+    def can_transfer(self, request, view, action, field: str = None) -> bool:
+        user = request.user
+        if user.has_perm('manage_paper'):
+            return True
+        elif user.has_perm('mediate_paper'):
+            submission = view.get_object()
+            return submission.user == user
+        else: return False
 
     def has_perms(self, request, view, action, field: str) -> bool:
         user = request.user

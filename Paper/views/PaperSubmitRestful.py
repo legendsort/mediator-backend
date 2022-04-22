@@ -20,6 +20,7 @@ from rest_framework_tricks import filters
 from Paper.policies import PublisherAccessPolicy, SubmissionAccessPolicy
 from Paper.helper import filter_params, SubmissionStatus
 from Paper.services import SubmissionService
+from Account.models import User
 
 
 # Order API
@@ -282,12 +283,45 @@ class SubmitViewSet(viewsets.ModelViewSet):
             })
         except Exception as e:
             print(e)
-            pass
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Server has error"
+            })
 
     # translate dealer
-    @action(detail=True, methods=['post'], url_path='transform')
-    def transform(self, request, pk=None):
+    @action(detail=True, methods=['post'], url_path='transfer')
+    def transfer(self, request, pk=None):
         instance = self.get_object()
+        try:
+            to_user = User.objects.get(pk=request.data.get('user_id'))
+            if to_user.has_perm('mediate_paper') or to_user.has_perm('manage_paper'):
+                instance.dealer = to_user
+                instance.save()
+            else:
+                return JsonResponse({
+                    'response_code': False,
+                    'data': [],
+                    'message': f"User {to_user.username} has no permission "
+                })
+            return JsonResponse({
+                'response_code': True,
+                'data': [],
+                'message': f"Submission {instance.id} has been transfer dealer to {to_user.username}"
+            })
+        except User.DoesNotExist:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Please select correct user"
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Server has errors"
+            })
 
     # send information of submit
     @action(detail=True, methods=['post'], url_path='send')

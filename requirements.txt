@@ -23,7 +23,7 @@ cryptography==36.0.1
 daphne==3.0.2
 defusedxml==0.7.1
 Deprecated==1.2.13
-Django==4.0.3
+Django==4.0.4
 django-cors-headers==3.11.0
 django-environ==0.8.1
 django-filter==21.1
@@ -48,13 +48,16 @@ itypes==1.2.0
 Jinja2==3.0.3
 jinxed==1.1.0
 jwcrypto==1.0
+lxml==4.8.0
 MarkupSafe==2.1.0
 mongoengine==0.24.1
 msgpack==1.0.3
 multidict==6.0.2
 mysqlclient==2.1.0
+nextcloud-api-wrapper==0.2.3
 oauthlib==3.2.0
 packaging==21.3
+Pillow==9.1.0
 pipupgrade==1.12.0
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
@@ -66,6 +69,7 @@ pyOpenSSL==22.0.0
 pyparsing==3.0.7
 PySocks==1.7.1
 python-dateutil==2.8.2
+python-docx==0.8.11
 pytz==2021.3
 redis==3.5.3
 requests==2.27.1

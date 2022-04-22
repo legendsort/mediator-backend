@@ -300,6 +300,7 @@ class UploadFile(TimeStampMixin):
 class Resource(TimeStampMixin):
     order = GenericRelation(Order, related_query_name='order_resource')
     is_download = models.BooleanField(default=True)
+    content = models.TextField(null=True)
     file_lists = models.JSONField(null=True)
 
 

@@ -16,6 +16,7 @@ from watchdog.events import FileSystemEventHandler
 from django.conf import settings
 import uuid
 import glob
+from django_q.tasks import async_task
 
 
 class APIBaseService:
@@ -104,6 +105,35 @@ class NotificationService:
 
     def get_channel_name(self, name):
         return f"{self.channel_prefix}_{name}"
+
+
+# Notify parser procedure
+class NotifyParserService:
+    def __init__(self, data, mode: str, file_path: str):
+        self.data = data
+        self.file_path = file_path
+        if mode in self._instance_method_choices:
+            self.mode = mode
+        else:
+            raise ValueError(f"Invalid Value for mode: {mode}")
+
+    def notify_system_info(self) -> bool:
+        try:
+            print(f"Value {self.data.get('usedpct') if self.data.get('usedpct') else self.data.get('loadpct')}")
+            return True
+        except IndexError:
+            print('here')
+        except Exception as e:
+            print(e)
+            return False
+
+    _instance_method_choices = {
+        "systeminfo-disk": notify_system_info,
+        "systeminfo-cpu": notify_system_info,
+    }
+
+    def run(self):
+        self._instance_method_choices[self.mode].__get__(self)()
 
 
 class WatchService:

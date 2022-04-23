@@ -14,7 +14,7 @@ class MediatorViewSet(viewsets.ViewSet):
     * Requires token authentication.
     * Only admin users are able to access this view.
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, ]
 
     @action(detail=False, methods=['get'], url_path='connect')
     def connect_mediator(self, request, pk=None):

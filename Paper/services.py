@@ -9,7 +9,6 @@ import os
 from django.conf import settings
 import zipfile
 from os.path import basename
-
 from Account.services import GatewayService
 
 

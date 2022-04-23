@@ -5,6 +5,7 @@ import Paper.models
 from Account.message import Error
 from Account.services import GatewayService
 from Bank.task import run_fetch_bank_data
+from Account.schedules import run_async_notify_scan
 
 
 class Command(BaseCommand):
@@ -12,7 +13,8 @@ class Command(BaseCommand):
         pass
 
     def handle(self, *args, **options):
-        gateway_service = GatewayService()
-        gateway_service.send_request(action='upload_resource', data={
-            'user': 'paper_id',})
+        run_async_notify_scan()
+        # gateway_service = GatewayService()
+        # gateway_service.send_request(action='upload_resource', data={
+        #     'user': 'paper_id',})
 

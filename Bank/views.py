@@ -5,6 +5,7 @@ import rest_framework.parsers
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes, authentication_classes, action
 from rest_framework.viewsets import ModelViewSet
+
 from rest_framework.permissions import IsAuthenticated
 from Bank.serializers import DataSerializer
 from Bank.models import Data, DataType
@@ -16,12 +17,15 @@ from django.utils.timezone import make_aware
 from Paper.render import JSONResponseRenderer
 from rest_framework.pagination import PageNumberPagination
 
+from rest_framework import viewsets
+from rest_framework_simplejwt.tokens import RefreshToken
+from Bank.config_service import ConfigService
+from rest_framework.response import Response
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 1000
-
 
 class DataViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -109,4 +113,31 @@ class DataViewSet(ModelViewSet):
             return JsonResponse({
                 'response_code': False,
                 'message': 'server has error!'
+            })
+
+class ConfigSet(viewsets.ViewSet):
+    """
+    manage config set 
+
+    * Requires token authentication.
+    * Only admin users are able to access this view.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def read(self, request):
+        try:
+            refresh = RefreshToken.for_user(self.request.user)
+            service = ConfigService(token=str(refresh.access_token))
+            response_code, response = service.fetch(path=request.query_params.get('path', '/'))
+            return Response({
+                'response_code': response_code,
+                'message': response if not response_code else response['message'],
+                'data': response['data'] if response_code else []
+            })
+        except Exception as e:
+            print(e)
+            return Response({
+                'response_code': False,
+                'message': 'Server has error',
+                'data': []
             })

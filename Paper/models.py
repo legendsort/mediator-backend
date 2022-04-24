@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from Paper.helper import publisher_logo_path, journal_resource_path, submit_upload_path
 from django.apps import apps
 
+
 # Create your models here.
 class ReviewType(models.Model):
     name = models.CharField(max_length=255, unique=True)

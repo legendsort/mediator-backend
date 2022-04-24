@@ -1,5 +1,4 @@
 import json
-
 import requests as req
 from django.conf import settings
 from Bank.models import Data, DataType

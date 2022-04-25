@@ -9,7 +9,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from Bank.serializers import DataSerializer
 from Bank.models import Data, DataType
-from Bank.services import BankService
+from Bank.services import BankService, ScriptConfigService
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from dateutil.relativedelta import relativedelta
@@ -19,9 +19,7 @@ from rest_framework.pagination import PageNumberPagination
 
 from rest_framework import viewsets
 from rest_framework_simplejwt.tokens import RefreshToken
-from Bank.config_service import ConfigService
 from rest_framework.response import Response
-
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
@@ -115,7 +113,7 @@ class DataViewSet(ModelViewSet):
                 'message': 'server has error!'
             })
 
-class ConfigSet(viewsets.ViewSet):
+class ScriptConfigViewSet(viewsets.ViewSet):
     """
     manage config set 
 
@@ -124,20 +122,92 @@ class ConfigSet(viewsets.ViewSet):
     """
     permission_classes = [IsAuthenticated]
 
-    def read(self, request):
+    @action(detail=False, url_path='fetch')
+    def fetch(self, request):
         try:
-            refresh = RefreshToken.for_user(self.request.user)
-            service = ConfigService(token=str(refresh.access_token))
-            response_code, response = service.fetch(path=request.query_params.get('path', '/'))
-            return Response({
+            site = request.query_params.get('site', 'bank')
+            tag = request.query_params.get('tag', 'browser')
+            service = ScriptConfigService()
+            response_code, response_data = service.fetch(params={
+                'site': site,
+                'tag': tag
+            })
+            return JsonResponse({
                 'response_code': response_code,
-                'message': response if not response_code else response['message'],
-                'data': response['data'] if response_code else []
+                'message': response_data if not response_code else response_data['message'],
+                'data': [] if not response_code else response_data['data'],
             })
         except Exception as e:
             print(e)
-            return Response({
+            return JsonResponse({
                 'response_code': False,
-                'message': 'Server has error',
-                'data': []
+                'message': 'server has error!'
+            })
+
+    @action(detail=False, methods=['post'], url_path='create')
+    def createConfig(self, request):
+        try:
+            site = request.data.get('site', 'bank')
+            tag = request.data.get('tag', 'browser')
+            config = request.data.get('config')
+            service = ScriptConfigService()
+            response_code, response_data = service.create(data={
+                'site': site,
+                'tag': tag,
+                'config': config
+            })
+            return JsonResponse({
+                'response_code': response_code,
+                'message': response_data if not response_code else response_data['message'],
+                'data': [] if not response_code else response_data['data'],
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'message': 'server has error!'
+            })
+    
+    @action(detail=False, methods=['post'], url_path='update')
+    def updateConfig(self, request):
+        try:
+            id = request.data.get('id')
+            config = request.data.get('config')
+            service = ScriptConfigService()
+            response_code, response_data = service.update(data={
+                'id': id,
+                'config': config,
+            })
+            return JsonResponse({
+                'response_code': response_code,
+                'message': response_data if not response_code else response_data['message'],
+                'data': [] if not response_code else response_data['data'],
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'message': 'server has error!'
+            })
+
+    @action(detail=False, methods=['delete'], url_path='delete')
+    def deleteConfig(self, request):
+        try:
+            site = request.data.get('site', 'bank')
+            tag = request.data.get('tag', 'test')
+            service = ScriptConfigService()
+            response_code, response_data = service.delete(data={
+                'site': site,
+                'tag': tag,
+            })
+            return JsonResponse({
+                'response_code': response_code,
+                'message': response_data if not response_code else response_data['message'],
+                'data': [] if not response_code else response_data['data'],
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'message': 'server has error!'
             })

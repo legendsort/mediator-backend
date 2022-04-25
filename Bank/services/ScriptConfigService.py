@@ -12,8 +12,6 @@ class ScriptConfigService:
             'Accept': '*/*',
         }
 
-        
-
     def call(self, url='', data=None, files=None, method='post'):
         try:
             if files:
@@ -26,7 +24,7 @@ class ScriptConfigService:
             elif method == 'post':
                 res = req.post(url, json=data, headers=self.headers)
             else:
-                res = req.delete(url, json=data, headers=self.headers)
+                res = req.delete(url, params=data, headers=self.headers)
             if 400 > res.status_code >= 200:
                 pass
             elif res.status_code >= 400:
@@ -63,6 +61,7 @@ class ScriptConfigService:
             
             response_code, response_data = self.call(url=url, data=data)
             if response_code and response_data['response_code'] is True:
+                code, response_data = self.fetch({"site": "all", "tag": "all"})
                 return response_code, response_data
             else:
                 print(response_code, response_data)
@@ -73,9 +72,10 @@ class ScriptConfigService:
     def update(self, data = None):
         try:
             url = f"{self.base_url}/update"
-            
             response_code, response_data = self.call(url=url, data=data)
+            
             if response_code and response_data['response_code'] is True:
+                code, response_data = self.fetch({"site": "all", "tag": "all"})
                 return response_code, response_data
             else:
                 print(response_code, response_data)
@@ -86,12 +86,13 @@ class ScriptConfigService:
     def delete(self, data = None):
         try:
             url = f"{self.base_url}/delete"
-            print (data)
-            response_code, response_data = self.call(url=url, method='delete', data=data)
+            response_code, response_data = self.call(url=url, method='post', data=data)
+            
             if response_code and response_data['response_code'] is True:
+                code, response_data = self.fetch({"site": "all", "tag": "all"})
                 return response_code, response_data
             else:
-                print(response_code, response_data)
+                return response_code, response_data
         except Exception as e:
             print('fetch config data exceptions', e)
             return False

@@ -190,12 +190,13 @@ class ScriptConfigViewSet(viewsets.ViewSet):
                 'message': 'server has error!'
             })
 
-    @action(detail=False, methods=['delete'], url_path='delete')
+    @action(detail=False, methods=['post'], url_path='delete')
     def deleteConfig(self, request):
         try:
             site = request.data.get('site', 'bank')
             tag = request.data.get('tag', 'test')
             service = ScriptConfigService()
+            print(site, tag)
             response_code, response_data = service.delete(data={
                 'site': site,
                 'tag': tag,

@@ -5,10 +5,11 @@ import rest_framework.parsers
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes, authentication_classes, action
 from rest_framework.viewsets import ModelViewSet
+
 from rest_framework.permissions import IsAuthenticated
 from Bank.serializers import DataSerializer
 from Bank.models import Data, DataType
-from Bank.services import BankService
+from Bank.services import BankService, ScriptConfigService
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from dateutil.relativedelta import relativedelta
@@ -16,12 +17,13 @@ from django.utils.timezone import make_aware
 from Paper.render import JSONResponseRenderer
 from rest_framework.pagination import PageNumberPagination
 
-
+from rest_framework import viewsets
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.response import Response
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 1000
-
 
 class DataViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -103,6 +105,106 @@ class DataViewSet(ModelViewSet):
                 'pageNumber': 0 if not response_code else response_data['pageNumber'],
                 'pageSize': 0 if not response_code else response_data['pageSize'],
                 'totalPages': 0 if not response_code else response_data['totalPages'],
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'message': 'server has error!'
+            })
+
+class ScriptConfigViewSet(viewsets.ViewSet):
+    """
+    manage config set 
+
+    * Requires token authentication.
+    * Only admin users are able to access this view.
+    """
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, url_path='fetch')
+    def fetch(self, request):
+        try:
+            site = request.query_params.get('site', 'bank')
+            tag = request.query_params.get('tag', 'browser')
+            service = ScriptConfigService()
+            response_code, response_data = service.fetch(params={
+                'site': site,
+                'tag': tag
+            })
+            return JsonResponse({
+                'response_code': response_code,
+                'message': response_data if not response_code else response_data['message'],
+                'data': [] if not response_code else response_data['data'],
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'message': 'server has error!'
+            })
+
+    @action(detail=False, methods=['post'], url_path='create')
+    def createConfig(self, request):
+        try:
+            site = request.data.get('site', 'bank')
+            tag = request.data.get('tag', 'browser')
+            config = request.data.get('config')
+            service = ScriptConfigService()
+            response_code, response_data = service.create(data={
+                'site': site,
+                'tag': tag,
+                'config': config
+            })
+            return JsonResponse({
+                'response_code': response_code,
+                'message': response_data if not response_code else response_data['message'],
+                'data': [] if not response_code else response_data['data'],
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'message': 'server has error!'
+            })
+    
+    @action(detail=False, methods=['post'], url_path='update')
+    def updateConfig(self, request):
+        try:
+            id = request.data.get('id')
+            config = request.data.get('config')
+            service = ScriptConfigService()
+            response_code, response_data = service.update(data={
+                'id': id,
+                'config': config,
+            })
+            return JsonResponse({
+                'response_code': response_code,
+                'message': response_data if not response_code else response_data['message'],
+                'data': [] if not response_code else response_data['data'],
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'message': 'server has error!'
+            })
+
+    @action(detail=False, methods=['post'], url_path='delete')
+    def deleteConfig(self, request):
+        try:
+            site = request.data.get('site', 'bank')
+            tag = request.data.get('tag', 'test')
+            service = ScriptConfigService()
+            print(site, tag)
+            response_code, response_data = service.delete(data={
+                'site': site,
+                'tag': tag,
+            })
+            return JsonResponse({
+                'response_code': response_code,
+                'message': response_data if not response_code else response_data['message'],
+                'data': [] if not response_code else response_data['data'],
             })
         except Exception as e:
             print(e)

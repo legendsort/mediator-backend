@@ -81,14 +81,17 @@ class SubmissionService:
             zipObj.write(self.document_path, basename(self.document_name))
             for file in self.submit.get_upload_files():
                 zipObj.write(file.file.path, basename(file.name))
+            zipObj.close()
+            return True
 
     def send(self):
         self.create_information_document()
         self.zip_data()
         try:
-            if os.path.exists(f"{getattr(settings, 'NIS_SEND_DIR_PATH')}/{basename(self.zip_file_path)}"):
-                os.remove(f"{getattr(settings, 'NIS_SEND_DIR_PATH')}/{basename(self.zip_file_path)}")
-            os.rename(self.zip_file_path, f"{getattr(settings, 'NIS_SEND_DIR_PATH')}/{basename(self.zip_file_path)}")
+            request_zip_file_path = f"{getattr(settings, 'NIS_SEND_DIR_PATH')}/{basename(self.zip_file_path)}"
+            if os.path.exists(request_zip_file_path):
+                os.remove(request_zip_file_path)
+            os.rename(self.zip_file_path, request_zip_file_path)
             gateway_service = GatewayService()
             remote_user_root_path = getattr(settings, 'REMOTE_NEXTCLOUD_USER_ROOT_PATH')
             request_data = {
@@ -96,7 +99,6 @@ class SubmissionService:
                 'file_name': basename(self.zip_file_path)
             }
             return gateway_service.send_request(action='upload_resource', data=request_data)
-
         except Exception as e:
             print('send_error', e)
             return False

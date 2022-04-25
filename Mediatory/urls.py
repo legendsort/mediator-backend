@@ -28,7 +28,7 @@ from Account.views import (
 )
 
 router = DefaultRouter(trailing_slash=False)
-router.register(r'', MediatorViewSet, basename='mediator')
+router.register(r'mediator', MediatorViewSet, basename='mediator')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -38,7 +38,7 @@ urlpatterns = [
     path(r'api/token/refresh', DecoratedTokenRefreshView.as_view(), name='token_refresh'),
     path(r'api/token/verify', DecoratedTokenVerifyView.as_view(), name='token_verify'),
     path('api/account/', include('Account.urls')),
-    path('api/mediator/', include(router.urls)),
+    path('api/', include(router.urls)),
     path('api/bank/', include('Bank.urls')),
     path('api/wipo/', include('Wipo.urls')),
     path('api/paper/', include('Paper.urls')),

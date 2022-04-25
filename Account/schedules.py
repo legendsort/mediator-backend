@@ -13,7 +13,8 @@ def run_async_notify_scan():
         for file_path in files:
             with open(file_path) as res_file:
                 data_loaded = json.load(res_file)
-                if data_loaded['notification']:
+                res_file.close()
+                if data_loaded.get('notification'):
                     parser = NotifyParserService(data=data_loaded, mode=data_loaded['mode'], file_path=file_path)
                     parser.run()
         return True

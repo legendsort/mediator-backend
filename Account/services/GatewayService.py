@@ -48,7 +48,7 @@ class NotifyParserService:
         if mode in self._instance_method_choices:
             self.mode = mode
         else:
-            raise ValueError(f"Invalid Value for mode: {mode}")
+            self.mode = None
 
     def do_notify(self, user, to_user) -> NotificationService:
         self.notifier = NotificationService(user)
@@ -74,8 +74,13 @@ class NotifyParserService:
     }
 
     def run(self):
-        self._instance_method_choices[self.mode].__get__(self)()
-        self.remove_file()
+        try:
+            self._instance_method_choices[self.mode].__get__(self)()
+            self.remove_file()
+            return True
+        except Exception as e:
+            print(e)
+            return False
 
 
 # Gateway service for connecting gateway service with different api

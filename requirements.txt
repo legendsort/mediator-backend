@@ -90,3 +90,5 @@ watchdog==2.1.7
 wcwidth==0.2.5
 wrapt==1.14.0
 zope.interface==5.4.0
+
+pyzipper~=0.3.5

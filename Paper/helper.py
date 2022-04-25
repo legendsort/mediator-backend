@@ -2,6 +2,7 @@ import hashlib
 import pathlib
 from rest_framework.pagination import PageNumberPagination
 from enum import Enum
+from os.path import basename
 
 
 def filter_params(params, items):
@@ -22,6 +23,10 @@ def journal_resource_path(instance, filename):
 
 def submit_upload_path(instance, filename):
     return f"upload/submit-papers/{instance.submit.id}/{hashlib.md5(str(filename).encode('utf-8')).hexdigest()}{pathlib.Path(filename).suffix}"
+
+
+def censor_file_path(instance, filename):
+    return f"censorship/{basename(filename)}"
 
 
 class StandardResultsSetPagination(PageNumberPagination):

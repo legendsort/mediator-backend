@@ -5,7 +5,7 @@ from Account.models import TimeStampMixin
 from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from Paper.helper import publisher_logo_path, journal_resource_path, submit_upload_path
+from Paper.helper import publisher_logo_path, journal_resource_path, submit_upload_path, censor_file_path
 from django.apps import apps
 
 
@@ -187,6 +187,9 @@ class Order(TimeStampMixin):
         through_fields=('order', 'status'),
         blank=True,
     )
+    download_at = models.DateTimeField(null=True)
+    censor_file = models.FileField(upload_to=censor_file_path, null=True)
+    is_censor_download = models.BooleanField(default=False)
 
 
 class OrderStatusLog(TimeStampMixin):

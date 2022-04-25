@@ -7,6 +7,7 @@ import re
 from Paper.models import Order
 from django.utils import timezone
 from django.core.files import File
+import shutil
 
 
 class CensorshipService:
@@ -47,7 +48,7 @@ class CensorshipService:
                     zf.write(file_path, file_path[len_dir_path:])
                     os.remove(file_path)
             zf.close()
-            os.rmdir(folder_path)
+            shutil.rmtree(folder_path)
             return True
 
     def censorship(self):

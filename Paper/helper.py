@@ -25,6 +25,10 @@ def submit_upload_path(instance, filename):
     return f"upload/submit-papers/{instance.submit.id}/{hashlib.md5(str(filename).encode('utf-8')).hexdigest()}{pathlib.Path(filename).suffix}"
 
 
+def resource_upload_path(instance, filename):
+    return f"upload/resource/{instance.resource.id}/{filename}"
+
+
 def censor_file_path(instance, filename):
     return f"censorship/{basename(filename)}"
 

@@ -214,5 +214,3 @@ class RequirementSerializer(serializers.ModelSerializer):
             'id',
             'name',
         ]
-
-

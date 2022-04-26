@@ -303,9 +303,14 @@ class UploadFile(TimeStampMixin):
 
 class Resource(TimeStampMixin):
     order = GenericRelation(Order, related_query_name='order_resource')
-    is_download = models.BooleanField(default=True)
-    content = models.TextField(null=True)
-    file_lists = models.JSONField(null=True)
+    is_upload = models.BooleanField(default=True)
+    is_allow = models.BooleanField(default=False)
+    title = models.CharField(max_length=255, null=True)
+    detail = models.TextField(null=True)
+
+    def upload_files(self):
+        UpFile = apps.get_model('Contest.UploadFile')
+        return UpFile.objects.filter(resource=self)
 
 
 class Author(TimeStampMixin):

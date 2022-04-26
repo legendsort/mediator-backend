@@ -19,6 +19,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from Account.views.MediatoryAPI import MediatorViewSet
 from Bank.views import ScriptConfigViewSet
+from Paper.views import OrderViewSet
 from rest_framework.routers import DefaultRouter
 from Account.views import (
     DecoratedTokenObtainPairView,
@@ -31,6 +32,7 @@ from Account.views import (
 router = DefaultRouter(trailing_slash=False)
 router.register(r'mediator', MediatorViewSet, basename='mediator')
 router.register(r'config', ScriptConfigViewSet, basename='config')
+router.register(r'order', OrderViewSet, basename='order')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('test', test),

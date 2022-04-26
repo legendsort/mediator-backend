@@ -20,10 +20,13 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework import viewsets
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.response import Response
+
+
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 1000
+
 
 class DataViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
@@ -112,6 +115,7 @@ class DataViewSet(ModelViewSet):
                 'response_code': False,
                 'message': 'server has error!'
             })
+
 
 class ScriptConfigViewSet(viewsets.ViewSet):
     """

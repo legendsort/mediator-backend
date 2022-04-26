@@ -42,7 +42,7 @@ class ScriptConfigService:
             print('bank api calling error', e)
             return False, 'unknown error'
 
-    def fetch(self, params = None):
+    def fetch(self, params=None):
         try:
             url = f"{self.base_url}/fetch"
             

@@ -86,7 +86,7 @@ TEMPLATES = [
 
 # WSGI_APPLICATION = 'Mediatory.wsgi.application'
 
-ASGI_APPLICATION = 'Mediatory.asgi.application'
+ASGI_APPLICATION = 'Mediatory.routine.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases

@@ -51,7 +51,6 @@ class UserViewSet(ModelViewSet):
         try:
             user = self.request.user
             token = MyTokenObtainPairSerializer.get_token(user)
-            print(token)
             return JsonResponse({
                 'response_code': True,
                 'data': {

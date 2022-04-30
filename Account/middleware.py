@@ -45,7 +45,6 @@ class TokenAuthMiddleware:
             user = AnonymousUser()
         scope['user'] = user
         return await self.inner(scope, receive, send)
-    
 
 
 TokenAuthMiddlewareStack = lambda inner: TokenAuthMiddleware(AuthMiddlewareStack(inner))

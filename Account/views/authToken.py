@@ -1,5 +1,4 @@
-from abc import ABC
-
+from Account.serializers import UserSerializer, RoleSerializer, UserDetailSerializer
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
 from rest_framework_simplejwt.views import (
@@ -28,7 +27,8 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-        token['name'] = user.username
+        token['identifier'] = user.username
+        token['role'] = UserDetailSerializer(user).data.get('role')
         return token
 
 

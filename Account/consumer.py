@@ -23,18 +23,21 @@ class NotifierConsumer(AsyncWebsocketConsumer):
         self.room_group_name = f"notify_{self.scope['user'].username}"
         # Join room group
         try:
-            if self.scope['user'] is AnonymousUser():
+            if self.scope['user'].username:
                 await sync_to_async(self.scope['user'].update_online)(True)
         except Exception as e:
-            pass
+            print('notify websocket connection error', e)
+            return True
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
+        print(self.room_group_name)
         await self.accept()
 
     async def disconnect(self, close_code):
         # Leave room group
+        print('disconnecting-----', self.room_group_name)
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name

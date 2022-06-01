@@ -66,8 +66,8 @@ class MediatorService(APIBaseService):
         }
         self.token = token
 
-    def connect(self):
-        url = f"{self.base_url}/api/v1/connect/browser"
+    def connect(self, mode=None):
+        url = f"{self.base_url}/api/v1/connect/browser?mode={mode}"
         return self.call(url=url)
 
 

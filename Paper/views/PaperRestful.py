@@ -18,6 +18,7 @@ from Paper.helper import filter_params
 # Journal API
 class JournalFilter(django_filters.FilterSet):
     publisher = django_filters.ModelMultipleChoiceFilter(field_name='publisher', queryset=Publisher.objects.all())
+    name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
 
     class Meta:
         model = Journal
@@ -33,8 +34,13 @@ class JournalViewSet(viewsets.ModelViewSet):
     pagination_class = StandardResultsSetPagination
     filterset_class = JournalFilter
     renderer_classes = [JSONResponseRenderer, ]
-    filter_backends = [DjangoFilterBackend, ]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     queryset = Journal.objects.all()
+    ordering_fields = {
+        'name': 'name',
+        'publisher': 'publisher__name'
+    }
+    ordering = ['name']
 
     def get_base_data(self):
         return filter_params(self.request.data, [
@@ -64,14 +70,14 @@ class JournalViewSet(viewsets.ModelViewSet):
                 journal.assign_product(products)
                 journal.assign_country(countries)
                 journal.assign_category(categories)
-                if request.data.get('review_type') and ReviewType.objects.filter(pk=int(request.data.get('review_type'))).exists():
-                    journal.review_type = ReviewType.objects.get(pk=int(request.data.get('review_type')))
+                if request.data.get('review_type') and ReviewType.objects.filter(pk=int(request.data.get('review_type', 0))).exists():
+                    journal.review_type = ReviewType.objects.get(pk=int(request.data.get('review_type', 0)))
                 if request.data.get('frequency') and Frequency.objects.filter(
-                        pk=int(request.data.get('frequency'))).exists():
-                    journal.frequency = Frequency.objects.get(pk=int(request.data.get('frequency')))
+                        pk=int(request.data.get('frequency', 0))).exists():
+                    journal.frequency = Frequency.objects.get(pk=int(request.data.get('frequency', 0)))
                 if request.data.get('publisher') and Publisher.objects.filter(
-                        pk=int(request.data.get('publisher'))).exists():
-                    journal.publisher = Publisher.objects.get(pk=int(request.data.get('publisher')))
+                        pk=int(request.data.get('publisher', 0))).exists():
+                    journal.publisher = Publisher.objects.get(pk=int(request.data.get('publisher', 0)))
                 journal.save()
             else:
                 print(serializer.errors)
@@ -124,9 +130,9 @@ class JournalViewSet(viewsets.ModelViewSet):
                     'message': serializer.errors
                 })
             return JsonResponse({
-                'response_code': False,
+                'response_code': True,
                 'data': serializer.data,
-                'message': 'Duplicated name'
+                'message': 'Journal has been updated'
             })
             pass
         except Exception as e:
@@ -159,12 +165,13 @@ class JournalViewSet(viewsets.ModelViewSet):
 
 class PublisherFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
+    name_translate = django_filters.CharFilter(field_name='name_translate', lookup_expr='icontains')
 
     class Meta:
         model = Publisher
         fields = {
             'id': ['exact'],
-            'name': ['icontains']
+            'name': ['icontains', ]
         }
 
 

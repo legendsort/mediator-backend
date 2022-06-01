@@ -217,4 +217,6 @@ class RequirementSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'name',
+            'description',
+            'file_type'
         ]

@@ -21,6 +21,7 @@ class ReviewTypeSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'json',
+            'description'
         ]
 
 
@@ -43,8 +44,10 @@ class CountrySerializer(serializers.ModelSerializer):
             'id',
             'name',
             'iso',
+            'iso3',
             'nice_name',
             'num_code',
+            'phone_code',
         ]
 
 
@@ -203,6 +206,7 @@ class StatusSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'name',
+            'description',
         ]
 
 

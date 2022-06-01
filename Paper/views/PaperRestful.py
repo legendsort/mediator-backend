@@ -166,6 +166,7 @@ class JournalViewSet(viewsets.ModelViewSet):
 class PublisherFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
     name_translate = django_filters.CharFilter(field_name='name_translate', lookup_expr='icontains')
+    site_address = django_filters.CharFilter(field_name='site_address', lookup_expr='icontains')
 
     class Meta:
         model = Publisher
@@ -180,9 +181,13 @@ class PublisherViewSet(viewsets.ModelViewSet):
     serializer_class = PublisherSerializer
     pagination_class = StandardResultsSetPagination
     renderer_classes = [JSONResponseRenderer, ]
-    filter_backends = [DjangoFilterBackend, ]
     filterset_class = PublisherFilter
     queryset = Publisher.objects.all()
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    ordering_fields = {
+        'name': 'name',
+        'name_translate': 'name_translate'
+    }
 
     def destroy(self, request, *args, **kwargs):
         try:
@@ -203,6 +208,9 @@ class PublisherViewSet(viewsets.ModelViewSet):
 # country API
 class CountryFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
+    nice_name = django_filters.CharFilter(field_name='nice_name', lookup_expr='icontains')
+    iso = django_filters.CharFilter(field_name='iso', lookup_expr='icontains')
+    num_code = django_filters.CharFilter(field_name='num_code', lookup_expr='icontains')
 
     class Meta:
         model = Country
@@ -216,7 +224,11 @@ class CountryViewSet(viewsets.ModelViewSet):
     serializer_class = Paper.serializers.CountrySerializer
     pagination_class = StandardResultsSetPagination
     renderer_classes = [JSONResponseRenderer, ]
-    filter_backends = [DjangoFilterBackend, ]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    ordering_fields = {
+        'name': 'name',
+        'iso': 'iso'
+    }
     filterset_class = CountryFilter
     queryset = Country.objects.all()
 

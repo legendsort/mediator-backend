@@ -18,6 +18,7 @@ from Paper.helper import filter_params
 # Journal API
 class JournalFilter(django_filters.FilterSet):
     publisher = django_filters.ModelMultipleChoiceFilter(field_name='publisher', queryset=Publisher.objects.all())
+    frequency = django_filters.ModelMultipleChoiceFilter(field_name='frequency', queryset=Frequency.objects.all())
     name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
 
     class Meta:

@@ -46,6 +46,16 @@ class Role(models.Model):
     def get_codename(self) -> str:
         return self.codename
 
+    def assign_permissions(self, permissions):
+        self.permissions.clear()
+        for permission in permissions:
+            try:
+                permission = Permission.objects.get(pk=permission['id'])
+                self.permissions.add(permission)
+            except Permission.DoesNotExist:
+                continue
+        return True
+
 
 class Unit(models.Model):
     name = models.CharField(max_length=255, unique=True)

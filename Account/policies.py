@@ -30,3 +30,45 @@ class UserAccessPolicy(AccessPolicy):
     def updatable_user(request, view, action) -> bool:
         update_user = view.get_object()
         return request.user.has_perms(['manage_user']) or request.user.is_superuser or update_user == request.user
+
+
+class PermissionAccessPolicy(AccessPolicy):
+    statements = [
+        {
+            'action': ['list', 'retrieve', 'create', 'destroy'],
+            'principal': '*',
+            'effect': 'allow',
+            'condition': 'is_administrator'
+        },
+        {
+            "action": ["update"],
+            "principal": "*",
+            "effect": "allow",
+            'condition': 'is_administrator'
+        },
+    ]
+
+    @staticmethod
+    def is_administrator(request, view, action) -> bool:
+        return request.user.is_superuser
+
+
+class UnitAccessPolicy(AccessPolicy):
+    statements = [
+        {
+            'action': ['list', 'retrieve', 'create', 'destroy'],
+            'principal': '*',
+            'effect': 'allow',
+            'condition': 'is_administrator'
+        },
+        {
+            "action": ["update"],
+            "principal": "*",
+            "effect": "allow",
+            'condition': 'is_administrator'
+        },
+    ]
+
+    @staticmethod
+    def is_administrator(request, view, action) -> bool:
+        return request.user.is_superuser

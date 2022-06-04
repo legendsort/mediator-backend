@@ -29,10 +29,12 @@ class BusinessSerializer(serializers.ModelSerializer):
 
 # Unit
 class UnitSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d")
+    updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M")
 
     class Meta:
         model = Unit
-        fields = ['id', 'name',]
+        fields = ['id', 'name', 'address', 'super_origination', 'created_at', 'updated_at']
 
 
 # User serializer

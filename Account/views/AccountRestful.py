@@ -54,6 +54,7 @@ class UnitFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
     start_created_at = django_filters.DateTimeFilter(field_name='created_at', lookup_expr='gt')
     end_created_at = django_filters.DateTimeFilter(field_name='created_at', lookup_expr='lt')
+    businesses = django_filters.ModelMultipleChoiceFilter(field_name='businesses', queryset=BusinessType.objects.all())
 
     class Meta:
         model = Unit
@@ -70,6 +71,63 @@ class UnitViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = UnitFilter
     queryset = Unit.objects.all()
+
+    def create(self, request):
+        try:
+            serializer = Account.serializers.UnitSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                businesses = request.data.get('businesses')
+                unit = serializer.instance
+                unit.assign_business(businesses)
+                unit.save()
+            else:
+                return JsonResponse({
+                    'response_code': False,
+                    'data': serializer.errors,
+                    'message': 'Validation error'
+                })
+            return JsonResponse({
+                'response_code': True,
+                'data': serializer.data,
+                'message': 'Successfully created!'
+            })
+        except Exception as e:
+            print('----', e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Failed create Role'
+            })
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = Account.serializers.UnitSerializer(instance, data=request.data, partial=True)
+            if serializer.is_valid():
+                if request.data.get('businesses') is not []:
+                    instance.assign_business(request.data.get('businesses'))
+                serializer.save()
+                instance.save()
+            else:
+                return JsonResponse({
+                    'response_code': False,
+                    'data': [],
+                    'message': serializer.errors
+                })
+            return JsonResponse({
+                'response_code': True,
+                'data': serializer.data,
+                'message': 'Journal has been updated'
+            })
+            pass
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'server has error'
+            })
 
     def destroy(self, request, *args, **kwargs):
         try:

@@ -57,14 +57,6 @@ class Role(models.Model):
         return True
 
 
-class Unit(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    super_origination = models.CharField(max_length=255, null=True)
-    address = models.CharField(max_length=255, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-
 class Membership(models.Model):
     role = models.ForeignKey(Role, on_delete=models.CASCADE)
     permission = models.ForeignKey(Permission, on_delete=models.CASCADE)
@@ -73,9 +65,47 @@ class Membership(models.Model):
         unique_together = ['role', 'permission']
 
 
+class BusinessType(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    codename = models.CharField(max_length=255, unique=True, null=True)
+    description = models.TextField(max_length=1024)
+
+
+class Unit(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    super_origination = models.CharField(max_length=255, null=True)
+    address = models.CharField(max_length=255, null=True)
+    phone_number = models.CharField(max_length=255, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    businesses = models.ManyToManyField(
+        BusinessType,
+        through='UnitBusiness',
+        through_fields=('unit', 'business'),
+        blank=True,
+    )
+
+    def __str__(self):
+        return self.name
+
+    def get_codename(self) -> str:
+        return self.codename
+
+    def assign_business(self, businesses):
+        self.businesses.clear()
+        for business in businesses:
+            try:
+                business = BusinessType.objects.get(pk=business['id'])
+                self.businesses.add(business)
+            except BusinessType.DoesNotExist:
+                continue
+        return True
+
+
 class User(AbstractBaseUser, PermissionsMixin, TimeStampMixin):
     username = models.CharField(max_length=192, unique=True)
     real_name = models.CharField(max_length=255, null=True)
+    phone_number = models.CharField(max_length=255, null=True)
     is_active = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
@@ -127,10 +157,12 @@ class CustomerProfile(models.Model):
     user = GenericRelation(User, related_query_name='customer_profile')
 
 
-class BusinessType(models.Model):
-    name = models.CharField(max_length=255, unique=True)
-    codename = models.CharField(max_length=255, unique=True, null=True)
-    description = models.TextField(max_length=1024)
+class UnitBusiness(models.Model):
+    unit = models.ForeignKey(Unit, on_delete=models.CASCADE)
+    business = models.ForeignKey(BusinessType, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ['unit', 'business']
 
 
 class RemoteAccount(models.Model):

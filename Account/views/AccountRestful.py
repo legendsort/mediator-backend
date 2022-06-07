@@ -200,9 +200,9 @@ class RoleViewSet(viewsets.ModelViewSet):
     renderer_classes = [JSONResponseRenderer, ]
     filter_backends = [DjangoFilterBackend, ]
     filterset_class = RoleFilter
-    queryset = Role.objects.all()
+    queryset = Role.objects.exclude(codename='administrator')
 
-    def create(self, request):
+    def create(self, request,  *args, **kwargs):
         try:
             serializer = Account.serializers.RoleSerializer(data=request.data)
             if serializer.is_valid():

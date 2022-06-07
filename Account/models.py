@@ -88,9 +88,6 @@ class Unit(models.Model):
     def __str__(self):
         return self.name
 
-    def get_codename(self) -> str:
-        return self.codename
-
     def assign_business(self, businesses):
         self.businesses.clear()
         for business in businesses:
@@ -148,7 +145,7 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampMixin):
 class CustomerProfile(models.Model):
     position = models.CharField(max_length=255, null=True)
     phone_number = models.CharField(max_length=255, null=True)
-    unit = models.CharField(max_length=255, null=True)
+    department = models.CharField(max_length=255, null=True)
     email = models.CharField(max_length=255, null=True)
     password = models.CharField(max_length=255, null=True)
     account_is_active = models.BooleanField(default=True)
@@ -173,6 +170,9 @@ class RemoteAccount(models.Model):
     host = models.CharField(max_length=255)
     is_available = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['user', 'type']
 
 
 class Log(TimeStampMixin):

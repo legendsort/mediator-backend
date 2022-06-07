@@ -4,7 +4,7 @@ from rest_access_policy import AccessPolicy
 class UserAccessPolicy(AccessPolicy):
     statements = [
         {
-            'action': ['list', 'retrieve', 'create', ],
+            'action': ['list', 'retrieve', 'create', 'destroy'],
             'principal': '*',
             'effect': 'allow',
             'condition': 'manageable_user'

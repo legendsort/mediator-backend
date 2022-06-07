@@ -92,9 +92,9 @@ class UserDetailSerializer(serializers.ModelSerializer):
             'role',
             'is_active',
             'ip_address',
+            'phone_number',
             'is_online',
             'real_name',
-            'created_at',
             'unit',
         ]
 

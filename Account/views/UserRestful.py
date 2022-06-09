@@ -7,7 +7,7 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from Account.serializers import UserListSerializer, RoleSerializer, UserDetailSerializer
-from Account.models import User, Role, Unit
+from Account.models import User, Role, Unit, CustomerProfile
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
 from Paper.helper import StandardResultsSetPagination
@@ -50,7 +50,7 @@ class UserViewSet(ModelViewSet):
         return User.objects.filter(pk=None)
 
     def get_serializer_class(self):
-        if self.action == 'get_self_info'or self.action == 'retrieve':
+        if self.action == 'get_self_info' or self.action == 'retrieve':
             return UserDetailSerializer
         elif self.action == 'update' or self.action == 'partial_update' or self.action == 'create':
             return UserDetailSerializer
@@ -190,9 +190,78 @@ class UserViewSet(ModelViewSet):
                 'message': 'server has error!'
             })
 
-    @action(detail=True, url_path='profile', methods=['post'])
-    def update_profile(self, request):
+    @action(detail=True, methods=['put'], url_path='reset-password')
+    def reset_password(self, request, pk=None):
+        try:
+            instance = self.get_object()
+            instance.set_password('12345678')
+            instance.save()
+            return JsonResponse({
+                'response_code': True,
+                'data': [],
+                'message': 'Successfully reset!'
+            })
+        except django.db.DatabaseError:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Reset password failed'
+            })
         pass
+
+    @action(detail=True, url_path='change-password')
+    def change_password(self, request):
+        pass
+
+    @action(detail=True, url_path='profile', methods=['put'])
+    def update_profile(self, request, pk=None):
+        try:
+            instance = self.get_object()
+            profile = instance.profile if instance.profile else CustomerProfile()
+            profile.position = request.data.get('position', profile.position)
+            profile.department = request.data.get('department', profile.department)
+            profile.save()
+            if request.data.get('profile_remote_account'):
+                remote_accounts = request.data.get('profile_remote_account')
+                profile.assign_remote_user_list(remote_accounts)
+            instance.profile = profile
+            instance.save()
+            return JsonResponse({
+                'response_code': True,
+                'data': UserDetailSerializer(instance).data,
+                'message': 'Successfully update profile!'
+            })
+        except django.db.DatabaseError:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Update profile failed'
+            })
+
+    # @action(detail=True, url_path='profile', methods=['get'])
+    # def get_profile(self, request, pk=None):
+    #     try:
+    #         instance = self.get_object()
+    #         profile = instance.profile if instance.profile else CustomerProfile()
+    #         profile.position = request.data.get('position', profile.position)
+    #         profile.department = request.data.get('department', profile.department)
+    #         profile.save()
+    #         if request.data.get('profile_remote_account'):
+    #             remote_accounts = request.data.get('profile_remote_account')
+    #             profile.assign_remote_user_list(remote_accounts)
+    #         instance.profile = profile
+    #         instance.save()
+    #         return JsonResponse({
+    #             'response_code': True,
+    #             'data': UserDetailSerializer(instance).data,
+    #             'message': 'Successfully update profile!'
+    #         })
+    #     except django.db.DatabaseError:
+    #         return JsonResponse({
+    #             'response_code': False,
+    #             'data': [],
+    #             'message': 'Update profile failed'
+    #         })
 
     @action(detail=True, url_path='remote_user', methods=['post'])
     def update_remote_user(self, request):

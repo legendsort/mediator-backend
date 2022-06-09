@@ -17,6 +17,7 @@ router.register(r'article', ArticleViewSet, basename='article')
 router.register(r'submit', Paper.views.SubmitViewSet, basename='submit')
 router.register(r'status', Paper.views.StatusViewSet, basename='status')
 router.register(r'requirement', Paper.views.RequirementViewSet, basename='requirement')
+router.register(r'resource', Paper.views.ResourceViewSet, basename='resource')
 
 urlpatterns = [
     path(r'', include(router.urls))

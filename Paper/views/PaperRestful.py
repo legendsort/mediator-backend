@@ -498,3 +498,38 @@ class RequirementViewSet(viewsets.ModelViewSet):
                 'data': [],
                 'message': 'Can not remove this  instance'
             })
+
+# Request API
+class ResourceFilter(django_filters.FilterSet):
+    title = django_filters.CharFilter(field_name='title', lookup_expr='icontains')
+
+    class Meta:
+        model = Paper.models.Resource
+        fields = {
+            'title': ['icontains']
+        }
+
+
+class ResourceViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = Paper.serializers.ResourceSerializer
+    pagination_class = StandardResultsSetPagination
+    renderer_classes = [JSONResponseRenderer, ]
+    filter_backends = [DjangoFilterBackend, ]
+    filterset_class = ResourceFilter
+    queryset = Paper.models.Resource.objects.all()
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            self.perform_destroy(self.get_object())
+            return JsonResponse({
+                'response_code': True,
+                'data': [],
+                'message': 'Successfully removed!'
+            })
+        except django.db.DatabaseError:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Can not remove this  instance'
+            })            

@@ -222,7 +222,8 @@ class RequirementSerializer(serializers.ModelSerializer):
         ]
 
 class ResourceSerializer(serializers.ModelSerializer):
-    created_at = serializers.DateTimeField(format="%Y-%m-%d")
+    created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
+
     class Meta:
         model = Resource
         fields = [

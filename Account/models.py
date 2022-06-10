@@ -9,6 +9,7 @@ from Account.managers import UserManager
 from django.utils.translation import gettext_lazy as _
 import hashlib
 from django.utils import timezone
+from django.apps import apps
 
 
 class TimeStampMixin(models.Model):
@@ -144,14 +145,34 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampMixin):
 
 class CustomerProfile(models.Model):
     position = models.CharField(max_length=255, null=True)
-    phone_number = models.CharField(max_length=255, null=True)
     department = models.CharField(max_length=255, null=True)
-    email = models.CharField(max_length=255, null=True)
-    password = models.CharField(max_length=255, null=True)
-    account_is_active = models.BooleanField(default=True)
-    account_is_staff = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now_add=True)
     user = GenericRelation(User, related_query_name='customer_profile')
+
+    def assign_remote_user_list(self, accounts):
+        Journal = apps.get_model('Paper.Journal')
+        add_id_list = []
+        for account in accounts:
+            try:
+                if type(account.get('id')) == 'int' and RemoteAccount.objects.filter(pk=account.get('id')).exists():
+                    remote_user = RemoteAccount.objects.get(pk=account['id'])
+                else:
+                    remote_user = RemoteAccount()
+                remote_user.username = account['username']
+                remote_user.password = account['password']
+                remote_user.host = account['host']
+                remote_user.profile = self
+                if Journal.objects.filter(pk=account.get('journal')).exists():
+                    remote_user.journal = Journal.objects.get(pk=account.get('journal'))
+                if BusinessType.objects.filter(pk=account.get('type')).exists():
+                    remote_user.type = BusinessType.objects.get(pk=account.get('type'))
+                remote_user.save()
+                add_id_list.append(remote_user.id)
+            except Exception as e:
+                print('assign remote user account', e)
+                continue
+        RemoteAccount.objects.filter(profile=self).exclude(id__in=add_id_list).delete()
+        return True
 
 
 class UnitBusiness(models.Model):
@@ -163,16 +184,17 @@ class UnitBusiness(models.Model):
 
 
 class RemoteAccount(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_remote_account')
-    type = models.ForeignKey(BusinessType, on_delete=models.CASCADE, related_name='user_account_business')
+    profile = models.ForeignKey(CustomerProfile, on_delete=models.CASCADE, related_name='profile_remote_account', null=True)
+    type = models.ForeignKey(BusinessType, on_delete=models.CASCADE, related_name='user_account_business', null=True)
+    journal = models.ForeignKey('Paper.Journal', on_delete=models.CASCADE, related_name='user_account_journal', null=True)
     username = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
-    host = models.CharField(max_length=255)
+    host = models.CharField(max_length=255, null=True)
     is_available = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ['user', 'type']
+        unique_together = ['profile', 'type', 'username']
 
 
 class Log(TimeStampMixin):

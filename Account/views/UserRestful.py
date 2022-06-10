@@ -45,8 +45,11 @@ class UserViewSet(ModelViewSet):
     ordering = ['created_at']
 
     def get_queryset(self):
+        if (self.action == 'update' or self.action == 'partial_update') and self.request.user.is_superuser:
+            return User.objects.exclude(Q(is_remove=True))
         if self.request.user.is_superuser:
             return User.objects.exclude(Q(is_remove=True) | Q(is_superuser=True))
+
         return User.objects.filter(pk=None)
 
     def get_serializer_class(self):
@@ -132,7 +135,7 @@ class UserViewSet(ModelViewSet):
                 'data': [],
                 'message': 'Role does not exist'
             })
-        except  Unit.DoesNotExist:
+        except Unit.DoesNotExist:
             return JsonResponse({
                 'response_code': False,
                 'data': [],
@@ -174,14 +177,9 @@ class UserViewSet(ModelViewSet):
     def get_self_info(self, request):
         try:
             user = self.request.user
-            token = MyTokenObtainPairSerializer.get_token(user)
             return JsonResponse({
                 'response_code': True,
-                'data': {
-                    'username': user.username if user.username is not None else '',
-                    'role': RoleSerializer(user.role).data
-
-                }
+                'data': UserDetailSerializer(user).data
             })
         except Exception as e:
             print(e)
@@ -238,32 +236,41 @@ class UserViewSet(ModelViewSet):
                 'message': 'Update profile failed'
             })
 
-    # @action(detail=True, url_path='profile', methods=['get'])
-    # def get_profile(self, request, pk=None):
-    #     try:
-    #         instance = self.get_object()
-    #         profile = instance.profile if instance.profile else CustomerProfile()
-    #         profile.position = request.data.get('position', profile.position)
-    #         profile.department = request.data.get('department', profile.department)
-    #         profile.save()
-    #         if request.data.get('profile_remote_account'):
-    #             remote_accounts = request.data.get('profile_remote_account')
-    #             profile.assign_remote_user_list(remote_accounts)
-    #         instance.profile = profile
-    #         instance.save()
-    #         return JsonResponse({
-    #             'response_code': True,
-    #             'data': UserDetailSerializer(instance).data,
-    #             'message': 'Successfully update profile!'
-    #         })
-    #     except django.db.DatabaseError:
-    #         return JsonResponse({
-    #             'response_code': False,
-    #             'data': [],
-    #             'message': 'Update profile failed'
-    #         })
+    @action(detail=False, url_path='check-password', methods=['post'])
+    def check_password(self, request, pk=None):
+        try:
+            user = self.request.user
+            password = request.data.get('password')
+            user.check_password(password)
+            return JsonResponse({
+                'response_code': user.check_password(password),
+                'data': [],
+                'message': 'Checked'
+            })
+        except django.db.DatabaseError:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Update profile failed'
+            })
 
-    @action(detail=True, url_path='remote_user', methods=['post'])
-    def update_remote_user(self, request):
-        pass
-
+    @action(detail=False, url_path='change-password', methods=['post'])
+    def change_password(self, request, pk=None):
+        try:
+            user = self.request.user
+            password = request.data.get('newPassword')
+            print(password, request.data.get('oldPassword'))
+            if user.check_password(request.data.get('oldPassword')):
+                user.set_password(password)
+                user.save()
+            return JsonResponse({
+                'response_code': user.check_password(request.data.get('newPassword')),
+                'data': [],
+                'message': 'Changed'
+            })
+        except django.db.DatabaseError:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Change failed'
+            })

@@ -10,10 +10,9 @@ class UserAccessPolicy(AccessPolicy):
             'condition': 'manageable_user'
         },
         {
-            "action": ["update"],
+            "action": ["check_password", 'change_password'],
             "principal": "*",
             "effect": "allow",
-            'condition': 'updatable_user'
         },
         {
             "action": ["update"],

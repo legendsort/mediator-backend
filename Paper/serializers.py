@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from Paper.models import Journal, ReviewType, Country, ProductType, Frequency, Category,\
-    Publisher, Article, Submit, Order, Author, Status, Requirement, UploadFile, OrderStatusLog
+    Publisher, Article, Submit, Order, Author, Status, Requirement, UploadFile, OrderStatusLog, Resource
 
 
 class FrequencySerializer(serializers.ModelSerializer):
@@ -220,3 +220,15 @@ class RequirementSerializer(serializers.ModelSerializer):
             'description',
             'file_type'
         ]
+
+class ResourceSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
+
+    class Meta:
+        model = Resource
+        fields = [
+            'id',
+            'title',
+            'detail',
+            'created_at'
+        ]        

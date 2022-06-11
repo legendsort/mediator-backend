@@ -498,3 +498,97 @@ class RequirementViewSet(viewsets.ModelViewSet):
                 'data': [],
                 'message': 'Can not remove this  instance'
             })
+
+# Request API
+class ResourceFilter(django_filters.FilterSet):
+    title = django_filters.CharFilter(field_name='title', lookup_expr='icontains')
+
+    class Meta:
+        model = Paper.models.Resource
+        fields = {
+            'title': ['icontains']
+        }
+
+
+class ResourceViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = Paper.serializers.ResourceSerializer
+    pagination_class = StandardResultsSetPagination
+    renderer_classes = [JSONResponseRenderer, ]
+    filter_backends = [DjangoFilterBackend, ]
+    filterset_class = ResourceFilter
+    queryset = Paper.models.Resource.objects.all()
+
+    def get_base_data(self):
+        return filter_params(self.request.data, [
+            'title',
+            'detail'
+        ])
+
+    def create(self, request, *args, **kwargs):
+        try:
+            base_data = self.get_base_data()
+            serializer = Paper.serializers.ResourceSerializer(data=base_data)
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                print(serializer.errors)
+                return JsonResponse({
+                    'response_code': False,
+                    'data': serializer.errors,
+                    'message': 'Duplicated name'
+                })
+            return JsonResponse({
+                'response_code': True,
+                'data': serializer.data,
+                'message': 'Successfully created!'
+            })
+        except Exception as e:
+            print('----', e)
+            
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Failed create journal'
+            })
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = Paper.serializers.ResourceSerializer(instance, data=self.get_base_data(), partial=True)
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                return JsonResponse({
+                    'response_code': False,
+                    'data': [],
+                    'message': serializer.errors
+                })
+            return JsonResponse({
+                'response_code': True,
+                'data': serializer.data,
+                'message': 'Journal has been updated'
+            })
+            pass
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'server has error'
+            })
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            self.perform_destroy(self.get_object())
+            return JsonResponse({
+                'response_code': True,
+                'data': [],
+                'message': 'Successfully removed!'
+            })
+        except django.db.DatabaseError:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Can not remove this  instance'
+            })            

@@ -4,18 +4,18 @@ from rest_access_policy import AccessPolicy
 class UserAccessPolicy(AccessPolicy):
     statements = [
         {
-            'action': ['list', 'retrieve', 'create', 'destroy', 'reset_password', 'update_profile'],
+            'action': ['list', 'retrieve', 'create', 'destroy', 'reset_password',],
             'principal': '*',
             'effect': 'allow',
             'condition': 'manageable_user'
         },
         {
-            "action": ["check_password", 'change_password'],
+            "action": ["check_password", 'change_password', ],
             "principal": "*",
             "effect": "allow",
         },
         {
-            "action": ["update"],
+            "action": ["update",  'update_profile'],
             "principal": "*",
             "effect": "allow",
             'condition': 'updatable_user'

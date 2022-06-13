@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets, status
 import Paper.serializers
 from Paper.models import Journal, Publisher, Country, ReviewType, Category, ProductType, Frequency, Article
-from Paper.serializers import JournalSerializer, PublisherSerializer
+from Paper.serializers import JournalSerializer, PublisherSerializer, JournalSimpleSerializer, PublisherSimpleSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
 from Paper.helper import StandardResultsSetPagination
@@ -58,6 +58,12 @@ class JournalViewSet(viewsets.ModelViewSet):
             'start_year',
         ])
 
+    def get_serializer_class(self, *args, **kwargs):
+        if self.request.query_params.get('page_size') == '0' or self.request.query_params.get('page_size') == 0:
+            return JournalSimpleSerializer
+        else:
+            return JournalSerializer
+
     def create(self, request, *args, **kwargs):
         try:
             base_data = self.get_base_data()
@@ -94,8 +100,7 @@ class JournalViewSet(viewsets.ModelViewSet):
             })
         except Exception as e:
             print('----', e)
-            if journal:
-                journal.delete()
+
             return JsonResponse({
                 'response_code': False,
                 'data': [],
@@ -189,6 +194,13 @@ class PublisherViewSet(viewsets.ModelViewSet):
         'name': 'name',
         'name_translate': 'name_translate'
     }
+
+    def get_serializer_class(self, *args, **kwargs):
+        print('-----', self.request.query_params.get('page_size') == '0')
+        if self.request.query_params.get('page_size') == '0' or self.request.query_params.get('page_size') == 0:
+            return PublisherSimpleSerializer
+        else:
+            return PublisherSerializer
 
     def destroy(self, request, *args, **kwargs):
         try:
@@ -499,6 +511,7 @@ class RequirementViewSet(viewsets.ModelViewSet):
                 'message': 'Can not remove this  instance'
             })
 
+
 # Request API
 class ResourceFilter(django_filters.FilterSet):
     title = django_filters.CharFilter(field_name='title', lookup_expr='icontains')
@@ -531,6 +544,9 @@ class ResourceViewSet(viewsets.ModelViewSet):
             serializer = Paper.serializers.ResourceSerializer(data=base_data)
             if serializer.is_valid():
                 serializer.save()
+                instance = serializer.instance
+                instance.user = request.user
+                instance.save()
             else:
                 print(serializer.errors)
                 return JsonResponse({

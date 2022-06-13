@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 import hashlib
 from django.utils import timezone
 from django.apps import apps
+from Account.services.NotificationService import NotificationService
 
 
 class TimeStampMixin(models.Model):
@@ -238,12 +239,31 @@ class Comment(TimeStampMixin):
 
 
 class Notice(TimeStampMixin):
-    to = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='notice_to_user')
+    receiver = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='notice_receiver', null=True)
+    sender = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='notice_sender', null=True)
     content = models.TextField(null=True)
     additional_info = models.JSONField(null=True)
-    is_view = models.BooleanField(default=False)
+    is_read = models.BooleanField(default=False)
     is_highlight = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def send_notice(self):
+        if not self.sender or not self.receiver or self.sender == self.receiver:
+            return False
+        else:
+            notify = NotificationService(self.receiver)
+            return notify.notify(self.get_message())
+
+    def get_message(self):
+        return {
+            'type': 'notify',
+            'message': self.content,
+            'additional_info': self.additional_info,
+            'is_read': self.is_read,
+            'is_highlight': self.is_highlight,
+            'created_at': str(self.created_at),
+            'from': self.sender.username
+        }
 
 
 def user_directory_path(instance, filename):

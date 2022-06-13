@@ -77,6 +77,16 @@ class PublisherSerializer(serializers.ModelSerializer):
         ]
 
 
+class PublisherSimpleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Publisher
+        fields = [
+            'id',
+            'name',
+        ]
+
+
 class JournalSerializer(serializers.ModelSerializer):
     review_type = ReviewTypeSerializer(read_only=True)
     countries = CountrySerializer(many=True, required=False)
@@ -106,6 +116,17 @@ class JournalSerializer(serializers.ModelSerializer):
             'categories',
             'products',
             'publisher'
+        ]
+
+
+class JournalSimpleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Journal
+        fields = [
+            'id',
+            'name',
+
         ]
 
 

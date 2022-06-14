@@ -13,6 +13,7 @@ from Account.policies import PermissionAccessPolicy
 from Account.models import User
 from rest_framework_tricks import filters
 from django.db.models import Q
+from rest_framework.decorators import api_view, permission_classes, authentication_classes, action
 
 
 # BusinessType API
@@ -280,12 +281,17 @@ class RoleViewSet(viewsets.ModelViewSet):
 # Notice
 class NoticeFilter(django_filters.FilterSet):
     content = django_filters.CharFilter(field_name='content', lookup_expr='icontains')
+    user = django_filters.NumberFilter(method='search_by_user', lookup_expr='exact')
 
     class Meta:
         model = Notice
         fields = {
             'content': ['icontains']
         }
+
+    @staticmethod
+    def search_by_user(queryset, name, value):
+        return queryset.filter(Q(receiver__id=value) | Q(sender__id=value))
 
 
 class NoticeViewSet(viewsets.ModelViewSet):
@@ -297,7 +303,7 @@ class NoticeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_superuser:
+        if user.is_superuser and self.request.query_params.get('all'):
             return Notice.objects.all()
         else:
             return Notice.objects.filter(Q(sender=user) | Q(receiver=user))
@@ -379,3 +385,7 @@ class NoticeViewSet(viewsets.ModelViewSet):
                 'data': [],
                 'message': 'Can not remove this instance'
             })
+
+    @action(detail=False, url_path='get-contact-list')
+    def get_contact_list(self, request):
+        pass

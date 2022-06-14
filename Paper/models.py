@@ -319,6 +319,27 @@ class Resource(TimeStampMixin):
         UpFile = apps.get_model('Contest.UploadFile')
         return UpFile.objects.filter(resource=self)
 
+    def get_order(self):
+        if Order.objects.filter(order_resource=self).exists():
+            return Order.objects.get(order_resource=self)
+        else:
+            return None
+
+    def set_order(self, user=None, status=None, business_type=None) -> Order:
+        try:
+            if Order.objects.filter(order_resource=self).exists():
+                return Order.objects.get(order_resource=self)
+            else:
+                order = Order()
+                order.type = business_type
+                order.user = user
+                order.status = status
+                order.product = self
+                order.save()
+                return order        
+        except Exception as e:
+            return False
+
 
 class Author(TimeStampMixin):
 

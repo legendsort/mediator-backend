@@ -212,11 +212,15 @@ class SubmitSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    type = serializers.PrimaryKeyRelatedField(read_only=True)
+    user = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Order
         fields = [
             'id',
+            'user',
+            'type'
         ]
 
 
@@ -244,6 +248,25 @@ class RequirementSerializer(serializers.ModelSerializer):
 
 class ResourceSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
+    order_type = serializers.SerializerMethodField(read_only=True)
+    order_id = serializers.SerializerMethodField(read_only=True)
+
+    def get_order_type(self, obj):
+        try:
+            order = obj.get_order()
+            if order.type:
+                return order.type.name
+            return None
+
+        except Exception as e:
+            return None
+    def get_order_id(self, obj):
+        try:
+            order = obj.get_order()
+            return order.id
+
+        except Exception as e:
+            return None
 
     class Meta:
         model = Resource
@@ -251,5 +274,37 @@ class ResourceSerializer(serializers.ModelSerializer):
             'id',
             'title',
             'detail',
-            'created_at'
+            'created_at',
+            'order_type',
+            'order_id'
         ]        
+
+
+class ResourceDetailSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)    
+    type_id = serializers.SerializerMethodField(read_only=True)
+
+    def get_order(self, obj):
+        try:
+            order = obj.get_order()
+            return OrderSerializer(order).data
+
+        except Exception as e:
+            return None
+    def get_type_id(self, obj):
+        try:
+            order = obj.get_order()
+            return order.type_id
+
+        except Exception as e:
+            return None
+
+    class Meta:
+        model = Resource
+        fields = [
+            'id',
+            'title',
+            'detail',
+            'created_at',            
+            'type_id'
+        ] 

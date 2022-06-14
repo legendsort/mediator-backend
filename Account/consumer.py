@@ -1,6 +1,6 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from Account.models import Message
+from Account.models import Message, Notice
 from asgiref.sync import async_to_sync, sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from channels.db import database_sync_to_async
@@ -15,6 +15,21 @@ def get_user(user_id):
         return User.objects.get(id=user_id)
     except User.DoesNotExist:
         return AnonymousUser()
+
+
+@database_sync_to_async
+def create_notice(data):
+    notice = Notice()
+    try:
+        notice.sender = data['sender']
+        notice.receiver = data['receiver']
+        notice.content = data['content']
+        notice.additional_info = data['additional_info']
+        notice.save()
+        return True
+    except Exception as e:
+        print('---->', e)
+        return False
 
 
 class NotifierConsumer(AsyncWebsocketConsumer):
@@ -44,7 +59,7 @@ class NotifierConsumer(AsyncWebsocketConsumer):
         )
 
     # Receive message from WebSocket
-    async def receive(self, text_data):
+    async def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
 
@@ -91,10 +106,11 @@ class ChattingConsumer(AsyncWebsocketConsumer):
         )
 
     # Receive message from WebSocket
-    async def receive(self, text_data):
+    async def receive(self, text_data=None, bytes_data=None):
         try:
             text_data_json = json.loads(text_data)
-            to_user_id = text_data_json['to']
+            to_user_id = text_data_json['receiver']
+            await create_notice(text_data_json)
             to_user = await get_user(to_user_id)
             await self.channel_layer.group_send(
                 self.get_room_name(to_user.username),
@@ -108,10 +124,11 @@ class ChattingConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {
                     'type': 'chat_message',
-                    'message': text_data_json
+                    'message': {
+                        'type': 'error'
+                    }
                 }
             )
-            pass
 
     # Receive message from room group
     async def chat_message(self, event):

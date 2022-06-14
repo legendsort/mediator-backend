@@ -3,14 +3,16 @@ from django.http import JsonResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets
 import Account.serializers
-from Account.models import BusinessType, Unit, Permission, Role
+from Account.models import BusinessType, Unit, Permission, Role, Notice
 from Account.serializers import BusinessSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
 from Paper.helper import StandardResultsSetPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from Account.policies import PermissionAccessPolicy
+from Account.models import User
 from rest_framework_tricks import filters
+from django.db.models import Q
 
 
 # BusinessType API
@@ -72,7 +74,7 @@ class UnitViewSet(viewsets.ModelViewSet):
     filterset_class = UnitFilter
     queryset = Unit.objects.all()
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
         try:
             serializer = Account.serializers.UnitSerializer(data=request.data)
             if serializer.is_valid():
@@ -257,6 +259,110 @@ class RoleViewSet(viewsets.ModelViewSet):
                 'response_code': False,
                 'data': [],
                 'message': 'server has error'
+            })
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            self.perform_destroy(self.get_object())
+            return JsonResponse({
+                'response_code': True,
+                'data': [],
+                'message': 'Successfully removed!'
+            })
+        except django.db.DatabaseError:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Can not remove this instance'
+            })
+
+
+# Notice
+class NoticeFilter(django_filters.FilterSet):
+    content = django_filters.CharFilter(field_name='content', lookup_expr='icontains')
+
+    class Meta:
+        model = Notice
+        fields = {
+            'content': ['icontains']
+        }
+
+
+class NoticeViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = Account.serializers.NoticeSerializer
+    renderer_classes = [JSONResponseRenderer, ]
+    filter_backends = [DjangoFilterBackend, ]
+    filterset_class = NoticeFilter
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return Notice.objects.all()
+        else:
+            return Notice.objects.filter(Q(sender=user) | Q(receiver=user))
+
+    def create(self, request,  *args, **kwargs):
+        try:
+            serializer = Account.serializers.NoticeSerializer(data=request.data)
+            receiver = User.objects.get(pk=request.data.get('receiver'))
+            sender = request.user
+            if serializer.is_valid():
+                serializer.save()
+                instance = serializer.instance
+                instance.sender = sender
+                instance.receiver = receiver
+                instance.save()
+                instance.send_notice()
+            else:
+                return JsonResponse({
+                    'response_code': False,
+                    'data': serializer.errors,
+                    'message': 'Validation error'
+                })
+            return JsonResponse({
+                'response_code': True,
+                'data': serializer.data,
+                'message': 'Successfully created!'
+            })
+        except User.DoesNotExist:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'You have to select correct receiver'
+            })
+
+        except Exception as e:
+            print('----', e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Failed create Role'
+            })
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            instance.is_read = True
+            instance.save()
+            return JsonResponse({
+                'response_code': True,
+                'data': [],
+                'message': 'Successfully created!'
+            })
+        except User.DoesNotExist:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'You have to select correct receiver'
+            })
+
+        except Exception as e:
+            print('----', e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Failed create Role'
             })
 
     def destroy(self, request, *args, **kwargs):

@@ -60,6 +60,12 @@ class JournalViewSet(viewsets.ModelViewSet):
             'start_year',
         ])
 
+    def get_serializer_class(self, *args, **kwargs):
+        if self.request.query_params.get('page_size') == '0' or self.request.query_params.get('page_size') == 0:
+            return JournalSimpleSerializer
+        else:
+            return JournalSerializer
+
     def create(self, request, *args, **kwargs):
         try:
             base_data = self.get_base_data()
@@ -96,8 +102,7 @@ class JournalViewSet(viewsets.ModelViewSet):
             })
         except Exception as e:
             print('----', e)
-            if journal:
-                journal.delete()
+
             return JsonResponse({
                 'response_code': False,
                 'data': [],
@@ -191,6 +196,13 @@ class PublisherViewSet(viewsets.ModelViewSet):
         'name': 'name',
         'name_translate': 'name_translate'
     }
+
+    def get_serializer_class(self, *args, **kwargs):
+        print('-----', self.request.query_params.get('page_size') == '0')
+        if self.request.query_params.get('page_size') == '0' or self.request.query_params.get('page_size') == 0:
+            return PublisherSimpleSerializer
+        else:
+            return PublisherSerializer
 
     def destroy(self, request, *args, **kwargs):
         try:
@@ -500,6 +512,7 @@ class RequirementViewSet(viewsets.ModelViewSet):
                 'data': [],
                 'message': 'Can not remove this  instance'
             })
+
 
 # Request API
 class ResourceFilter(django_filters.FilterSet):

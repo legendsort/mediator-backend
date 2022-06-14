@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from Account.models import Role, Permission, User, BusinessType, Unit, CustomerProfile, RemoteAccount
+from Account.models import Role, Permission, User, BusinessType, Unit, CustomerProfile, RemoteAccount, Notice
 from django.apps import apps
 
 
@@ -141,6 +141,26 @@ class UserDetailSerializer(serializers.ModelSerializer):
             'real_name',
             'unit',
             'profile',
+        ]
+
+
+#
+class NoticeSerializer(serializers.ModelSerializer):
+    receiver = serializers.StringRelatedField(read_only=True)
+    sender = serializers.StringRelatedField(read_only=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+
+    class Meta:
+        model = Notice
+        fields = [
+            'id',
+            'content',
+            'receiver',
+            'sender',
+            'additional_info',
+            'is_read',
+            'is_highlight',
+            'created_at'
         ]
 
 

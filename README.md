@@ -23,3 +23,11 @@ python -m venv venv/path
 cd venv/path/Script/activate
 python -m pip install -r requirements.txt
 ```
+
+## Start server with development environment.
+
+```shell
+python manage.py runserver 0.0.0.0.:{port}
+```
+
+## 

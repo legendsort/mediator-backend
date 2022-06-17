@@ -3,14 +3,13 @@ from django.http import JsonResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets
 import Account.serializers
-from Account.models import BusinessType, Unit, Permission, Role, Notice
-from Account.serializers import BusinessSerializer
+from Account.models import BusinessType, Unit, Permission, Role, Notice, User
+from Account.serializers import BusinessSerializer, UserOutSideSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
 from Paper.helper import StandardResultsSetPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from Account.policies import PermissionAccessPolicy
-from Account.models import User
 from rest_framework_tricks import filters
 from django.db.models import Q
 from rest_framework.decorators import api_view, permission_classes, authentication_classes, action
@@ -303,8 +302,12 @@ class NoticeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        if self.action == 'get_contact_list':
+            return Notice.objects.all()
         if user.is_superuser and self.request.query_params.get('all'):
             return Notice.objects.all()
+        elif user.has_perm('manage_contest') or user.has_perm('manage_wipo') or user.has_perm('manage_paper') or user.has_perm('manage_bank'):
+            return Notice.objects.filter(Q(sender=user) | Q(receiver=user))
         else:
             return Notice.objects.filter(Q(sender=user) | Q(receiver=user))
 
@@ -386,6 +389,39 @@ class NoticeViewSet(viewsets.ModelViewSet):
                 'message': 'Can not remove this instance'
             })
 
-    @action(detail=False, url_path='get-contact-list')
+    @action(detail=False, url_path='get-contacts')
     def get_contact_list(self, request):
-        pass
+        try:
+            user = request.user
+            if user.is_superuser:
+                users = User.objects.exclude(is_superuser=True, pk=user.pk)
+            elif user.has_perm('manage_contest'):
+                users = User.objects.filter(Q(role__permissions__codename='view_contest'))
+            elif user.has_perm('manage_paper'):
+                users = User.objects.filter(Q(role__permissions__codename='view_paper'))
+            elif user.has_perm('manage_wipo'):
+                users = User.objects.filter(Q(role__permissions__codename='view_wipo'))
+            elif user.has_perm('manage_bank'):
+                users = User.objects.filter(Q(role__permissions__codename='view_bank'))
+            elif user.has_perm('view_contest'):
+                users = User.objects.filter(Q(role__permissions__codename='manage_contest'))
+            elif user.has_perm('view_paper'):
+                users = User.objects.filter(Q(role__permissions__codename='manage_paper'))
+            elif user.has_perm('view_wipo'):
+                users = User.objects.filter(Q(role__permissions__codename='manage_wipo'))
+            elif user.has_perm('view_bank'):
+                users = User.objects.filter(Q(role__permissions__codename='manage_bank'))
+            else:
+                users = User.objects.filter(pk=None)
+            print(users.count())
+            return JsonResponse({
+                'response_code': True,
+                'data': UserOutSideSerializer(users, many=True).data,
+                'message': 'Successfully removed!'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Server has error'
+            })

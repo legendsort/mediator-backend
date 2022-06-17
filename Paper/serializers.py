@@ -246,6 +246,7 @@ class RequirementSerializer(serializers.ModelSerializer):
             'file_type'
         ]
 
+
 class ResourceSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
     order_type = serializers.SerializerMethodField(read_only=True)

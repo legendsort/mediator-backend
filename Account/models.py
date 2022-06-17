@@ -147,8 +147,6 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampMixin):
         Order = apps.get_model('Paper.Order')
 
 
-
-
 class CustomerProfile(models.Model):
     position = models.CharField(max_length=255, null=True)
     department = models.CharField(max_length=255, null=True)

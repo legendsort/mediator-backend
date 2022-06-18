@@ -117,6 +117,8 @@ class UserOutSideSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'username',
+            'is_online',
+            'real_name',
             'role'
         ]
 

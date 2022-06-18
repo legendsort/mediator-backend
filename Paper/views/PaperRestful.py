@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets, status
 import Paper.serializers
 from Paper.models import Journal, Publisher, Country, ReviewType, Category, ProductType, Frequency, Article, Status, Resource
-from Paper.serializers import JournalSerializer, PublisherSerializer, ResourceDetailSerializer, PublisherSimpleSerializer
+from Paper.serializers import JournalSerializer, PublisherSerializer, ResourceDetailSerializer, PublisherSimpleSerializer, JournalSimpleSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
 from Paper.helper import StandardResultsSetPagination

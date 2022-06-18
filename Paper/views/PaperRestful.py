@@ -540,13 +540,25 @@ class ResourceViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
+            print("====>gheerr")
             base_data = self.get_base_data()
+            print("====>", base_data)
             serializer = Paper.serializers.ResourceSerializer(data=base_data)
+            
             if serializer.is_valid():
+                upload_files = request.data.getlist('files')
+                business_type = request.data.get('type')
+                if not upload_files: 
+                    raise ValidationError('upload_files')
+                print("====>", upload_files)
                 serializer.save()
                 instance = serializer.instance
                 instance.user = request.user
+                print("====>", instance.user)
+                instance.set_upload_files(upload_files)
                 instance.save()
+                instance.set_order(request.user, 'New Resource', business_type)
+                pass
             else:
                 print(serializer.errors)
                 return JsonResponse({
@@ -565,7 +577,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': 'Failed create journal'
+                'message': 'Failed create Resource'
             })
 
     def update(self, request, *args, **kwargs):

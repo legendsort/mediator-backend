@@ -2,7 +2,7 @@ from rest_framework import serializers
 from Paper.models import Journal, ReviewType, Country, ProductType, Frequency, Category,\
     Publisher, Article, Submit, Order, Author, Status, Requirement, UploadFile, OrderStatusLog, Resource
 
-
+from Contest.serializers import UploadSerializer
 class FrequencySerializer(serializers.ModelSerializer):
     class Meta:
         model = Frequency
@@ -212,11 +212,17 @@ class SubmitSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    user = serializers.IntegerField(read_only=True)
+    type = serializers.StringRelatedField(read_only=True)
+    status = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Order
         fields = [
             'id',
+            'user',
+            'type',
+            'status',
         ]
 
 
@@ -244,6 +250,7 @@ class RequirementSerializer(serializers.ModelSerializer):
 
 class ResourceSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
+    upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True)
 
     class Meta:
         model = Resource
@@ -251,5 +258,8 @@ class ResourceSerializer(serializers.ModelSerializer):
             'id',
             'title',
             'detail',
-            'created_at'
+            'created_at',
+            'is_upload',
+            'is_allow',
+            'upload_files'
         ]        

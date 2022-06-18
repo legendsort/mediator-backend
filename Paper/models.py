@@ -6,7 +6,6 @@ from django.contrib.contenttypes.models import ContentType
 from Paper.helper import publisher_logo_path, journal_resource_path, submit_upload_path, censor_file_path
 from django.apps import apps
 
-
 class TimeStampMixin(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -228,7 +227,7 @@ class Submit(TimeStampMixin):
         for file in files:
             try:
                 m_file = UploadFile()
-                m_file.file = file
+                m_file.upFile = file
                 m_file.name = str(file)
                 m_file.submit = self
                 m_file.requirement = Requirement.objects.get(pk=require_ids[index])
@@ -297,7 +296,7 @@ class Submit(TimeStampMixin):
 class UploadFile(TimeStampMixin):
     name = models.CharField(max_length=255)
     requirement = models.ForeignKey(Requirement, on_delete=models.CASCADE, related_name='submit_upload_paper_type')
-    file = models.FileField(upload_to=submit_upload_path)
+    upFile = models.FileField(upload_to=submit_upload_path)
     submit = models.ForeignKey(Submit, on_delete=models.CASCADE, related_name='submit_upload_file', null=True)
 
     class Meta:
@@ -315,9 +314,61 @@ class Resource(TimeStampMixin):
     detail = models.TextField(null=True)
     dealer = models.ForeignKey('Account.User', on_delete=models.DO_NOTHING, related_name='resource_dealer', null=True)
 
-    def upload_files(self):
+    def get_upload_files(self):
         UpFile = apps.get_model('Contest.UploadFile')
         return UpFile.objects.filter(resource=self)
+
+    def set_upload_files(self, files):
+        index = 0
+        error = []
+        for file in files:
+            try:
+
+                UpFile = apps.get_model('Contest.UploadFile')
+                m_file = UpFile()
+                
+                m_file.file = file
+                
+                m_file.name = str(file)
+                m_file.resource = self
+                print("name;", m_file.name)
+                # if UpFile.objects.filter(resource=self).exists():
+                #     UpFile.objects.filter(resouce=self).delete()
+                m_file.save()
+                print("asdfasdf")
+
+                index += 1
+                print("====", index)
+
+            except Exception as e:
+              print('----', e)
+
+   
+
+        return True
+
+    def get_order(self):
+        if Order.objects.filter(order_resource=self).exists():
+            return Order.objects.get(order_resource=self)
+        else:
+            return None
+
+    def set_order(self, user=None, status=None, business_type=None) -> Order:
+        try:
+            print("==== set order ====")
+            pass
+        #     if Order.objects.filter(order_resource=self).exists():
+        #         return Order.objects.get(order_resource=self)
+        #     else:
+        #         order = Order()
+        #         order.type = business_type
+        #         order.user = user
+        #         order.status = status
+        #         order.product = self
+        #         order.save()
+        #         return order        
+        except Exception as e:
+            return False
 
 
 class Author(TimeStampMixin):

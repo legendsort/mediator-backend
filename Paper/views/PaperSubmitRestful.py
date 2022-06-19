@@ -20,44 +20,7 @@ from rest_framework_tricks import filters
 from Paper.policies import PublisherAccessPolicy, SubmissionAccessPolicy
 from Paper.helper import filter_params, SubmissionStatus
 from Paper.services import SubmissionService
-from Account.models import User
-
-
-# Order API
-class OrderFilter(django_filters.FilterSet):
-    name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
-
-    class Meta:
-        model = Order
-        fields = {
-            'id': ['icontains']
-        }
-
-
-class OrderViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, ]
-    serializer_class = Paper.serializers.OrderSerializer
-    pagination_class = StandardResultsSetPagination
-    renderer_classes = [JSONResponseRenderer, ]
-    filter_backends = [DjangoFilterBackend, ]
-    filterset_class = OrderFilter
-    queryset = Order.objects.all()
-
-    def destroy(self, request, *args, **kwargs):
-        try:
-            self.perform_destroy(self.get_object())
-            return JsonResponse({
-                'response_code': True,
-                'data': [],
-                'message': 'Successfully removed!'
-            })
-        except django.db.DatabaseError:
-            return JsonResponse({
-                'response_code': False,
-                'data': [],
-                'message': 'Can not remove this publisher'
-            })
-
+from Account.models import User, BusinessType
 
 # Submit API
 class SubmitFilter(django_filters.FilterSet):

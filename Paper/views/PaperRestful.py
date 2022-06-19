@@ -560,13 +560,19 @@ class ResourceViewSet(viewsets.ModelViewSet):
         try:
             base_data = self.get_base_data()
             serializer = Paper.serializers.ResourceSerializer(data=base_data)
-            type_id = request.data.get('type_id')
+            
             if serializer.is_valid():
+                upload_files = request.data.getlist('files')
+                codename = request.data.get('type')
+                if not upload_files: 
+                    raise ValidationError('upload_files')
                 serializer.save()
                 instance = serializer.instance
-                status = Status.objects.get(name='Requested') 
-                business_type = BusinessType.objects.get(pk=type_id)               
-                order = instance.set_order(user=request.user, status=status, business_type=business_type)
+                instance.user = request.user
+                instance.set_upload_files(upload_files)
+                instance.save()
+                instance.set_order(request.user, 'New Resource', codename)
+                pass
             else:
                 print(serializer.errors)
                 return JsonResponse({
@@ -594,39 +600,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': 'Failed create journal'
-            })
-
-    def update(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = Paper.serializers.ResourceSerializer(instance, data=self.get_base_data(), partial=True)
-            if serializer.is_valid():    
-                order = instance.get_order()
-                if order and order.status == Status.objects.get(name='Requested'):
-                    type_id = request.data.get('type_id')
-                    business_type = BusinessType.objects.get(pk=type_id) 
-                    order.type = business_type
-                    order.save()                   
-                    serializer.save()
-            else:
-                return JsonResponse({
-                    'response_code': False,
-                    'data': [],
-                    'message': serializer.errors
-                })
-            return JsonResponse({
-                'response_code': True,
-                'data': serializer.data,
-                'message': 'Journal has been updated'
-            })
-            pass
-        except Exception as e:
-            print(e)
-            return JsonResponse({
-                'response_code': False,
-                'data': [],
-                'message': 'server has error'
+                'message': 'Failed create Resource'
             })
 
 
@@ -643,4 +617,33 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 'response_code': False,
                 'data': [],
                 'message': 'Can not remove this  instance'
-            })            
+            })
+
+    # update resource status
+    @action(detail=True, methods=['post'], url_path='update-status')
+    def update_status(self, request, pk=None):
+        instance = self.get_object()
+        try:
+            message = request.data.get('message')
+            status_id = request.data.get('status_id')
+            instance.update_status(Status.objects.get(pk=status_id), message=message)
+            instance.save()
+            return JsonResponse({
+                'response_code': True,
+                'data': self.get_serializer(instance).data,
+                'message': 'Submission has been updated'
+            })
+        except Status.DoesNotExist:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Please submit correct status"
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Server has error"
+            })
+

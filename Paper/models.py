@@ -199,7 +199,6 @@ class Order(TimeStampMixin):
     is_censor_download = models.BooleanField(default=False)
 
 
-
 class OrderStatusLog(TimeStampMixin):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, null=True)
     status = models.ForeignKey(Status, on_delete=models.CASCADE, null=True)

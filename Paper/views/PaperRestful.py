@@ -517,6 +517,7 @@ class RequirementViewSet(viewsets.ModelViewSet):
 # Request API
 class ResourceFilter(django_filters.FilterSet):
     title = django_filters.CharFilter(field_name='title', lookup_expr='icontains')
+    id = django_filters.CharFilter(field_name='id', lookup_expr='icontains')
     start_created_at = django_filters.DateTimeFilter(field_name='created_at', lookup_expr='gt')
     end_created_at = django_filters.DateTimeFilter(field_name='created_at', lookup_expr='lt')
     class Meta:
@@ -536,14 +537,16 @@ class ResourceViewSet(viewsets.ModelViewSet):
     queryset = Resource.objects.all()
     ordering_fields = {
         'title': 'title',
+        'id':'id',
         'created_at': 'created_at'
     }
-    ordering = ['created_at','title']
+    ordering = ['created_at','title','id']
 
     def get_base_data(self):
         return filter_params(self.request.data, [
             'title',
-            'created_at'
+            'created_at',
+            'id'
         ])
 
     def get_serializer_class(self):

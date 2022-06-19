@@ -214,13 +214,15 @@ class SubmitSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     type = serializers.PrimaryKeyRelatedField(read_only=True)
     user = serializers.StringRelatedField(read_only=True)
+    status = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Order
         fields = [
             'id',
             'user',
-            'type'
+            'type',
+            'status'     
         ]
 
 
@@ -246,12 +248,12 @@ class RequirementSerializer(serializers.ModelSerializer):
             'file_type'
         ]
 
-
 class ResourceSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
-    order_type = serializers.SerializerMethodField(read_only=True)
-    order_id = serializers.SerializerMethodField(read_only=True)
-
+    order_type = serializers.SerializerMethodField(read_only=True)    
+    status = serializers.SerializerMethodField(read_only=True)
+    username = serializers.SerializerMethodField(read_only=True)
+    
     def get_order_type(self, obj):
         try:
             order = obj.get_order()
@@ -261,13 +263,22 @@ class ResourceSerializer(serializers.ModelSerializer):
 
         except Exception as e:
             return None
-    def get_order_id(self, obj):
+
+    def get_status(self, obj):
         try:
             order = obj.get_order()
-            return order.id
+            return order.status.name
 
         except Exception as e:
-            return None
+            return None  
+
+    def get_username(self, obj):
+        try:
+            order = obj.get_order()
+            return order.user.username
+
+        except Exception as e:
+            return None                      
 
     class Meta:
         model = Resource
@@ -277,7 +288,8 @@ class ResourceSerializer(serializers.ModelSerializer):
             'detail',
             'created_at',
             'order_type',
-            'order_id'
+            'status',
+            'username'
         ]        
 
 

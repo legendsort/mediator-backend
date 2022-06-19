@@ -263,3 +263,33 @@ class ResourceSerializer(serializers.ModelSerializer):
             'is_allow',
             'upload_files'
         ]        
+
+
+class ResourceDetailSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)    
+    type_id = serializers.SerializerMethodField(read_only=True)
+
+    def get_order(self, obj):
+        try:
+            order = obj.get_order()
+            return OrderSerializer(order).data
+
+        except Exception as e:
+            return None
+    def get_type_id(self, obj):
+        try:
+            order = obj.get_order()
+            return order.type_id
+
+        except Exception as e:
+            return None
+
+    class Meta:
+        model = Resource
+        fields = [
+            'id',
+            'title',
+            'detail',
+            'created_at',            
+            'type_id'
+        ] 

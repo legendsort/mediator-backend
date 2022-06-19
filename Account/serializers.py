@@ -117,6 +117,8 @@ class UserOutSideSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'username',
+            'is_online',
+            'real_name',
             'role'
         ]
 
@@ -148,7 +150,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
 class NoticeSerializer(serializers.ModelSerializer):
     receiver = serializers.StringRelatedField(read_only=True)
     sender = serializers.StringRelatedField(read_only=True)
-    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S")
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
 
     class Meta:
         model = Notice

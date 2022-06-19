@@ -1,5 +1,6 @@
 import django.db
 from django.db import models
+
 from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -179,7 +180,7 @@ class Requirement(models.Model):
         return self.name
 
 
-class Order(TimeStampMixin):
+class Order(TimeStampMixin):    
     type = models.ForeignKey('Account.BusinessType', on_delete=models.CASCADE, related_name='order_type')
     user = models.ForeignKey('Account.User', on_delete=models.CASCADE, related_name='order_user')
     status = models.ForeignKey(Status, on_delete=models.DO_NOTHING, related_name='order_status', null=True)
@@ -195,6 +196,7 @@ class Order(TimeStampMixin):
     download_at = models.DateTimeField(null=True)
     censor_file = models.FileField(upload_to=censor_file_path, null=True)
     is_censor_download = models.BooleanField(default=False)
+
 
 
 class OrderStatusLog(TimeStampMixin):
@@ -311,8 +313,7 @@ class Resource(TimeStampMixin):
     is_upload = models.BooleanField(default=True)
     is_allow = models.BooleanField(default=False)
     title = models.CharField(max_length=255, null=True)
-    detail = models.TextField(null=True)
-    dealer = models.ForeignKey('Account.User', on_delete=models.DO_NOTHING, related_name='resource_dealer', null=True)
+    detail = models.TextField(null=True)    
 
     def get_upload_files(self):
         UpFile = apps.get_model('Contest.UploadFile')

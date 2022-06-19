@@ -576,31 +576,6 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 'message': 'Failed create Resource'
             })
 
-    def update(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = Paper.serializers.ResourceSerializer(instance, data=self.get_base_data(), partial=True)
-            if serializer.is_valid():
-                serializer.save()
-            else:
-                return JsonResponse({
-                    'response_code': False,
-                    'data': [],
-                    'message': serializer.errors
-                })
-            return JsonResponse({
-                'response_code': True,
-                'data': serializer.data,
-                'message': 'Journal has been updated'
-            })
-            pass
-        except Exception as e:
-            print(e)
-            return JsonResponse({
-                'response_code': False,
-                'data': [],
-                'message': 'server has error'
-            })
 
     def destroy(self, request, *args, **kwargs):
         try:
@@ -615,4 +590,33 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 'response_code': False,
                 'data': [],
                 'message': 'Can not remove this  instance'
-            })            
+            })
+
+    # update resource status
+    @action(detail=True, methods=['post'], url_path='update-status')
+    def update_status(self, request, pk=None):
+        instance = self.get_object()
+        try:
+            message = request.data.get('message')
+            status_id = request.data.get('status_id')
+            instance.update_status(Status.objects.get(pk=status_id), message=message)
+            instance.save()
+            return JsonResponse({
+                'response_code': True,
+                'data': self.get_serializer(instance).data,
+                'message': 'Submission has been updated'
+            })
+        except Status.DoesNotExist:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Please submit correct status"
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Server has error"
+            })
+

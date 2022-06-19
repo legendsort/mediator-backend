@@ -280,7 +280,6 @@ class Submit(TimeStampMixin):
             order.user = self.user
             order.status = self.status
             order.product = self
-            print("===============>", self.user, self.status)
             order.save()
             order.status_logs.add(self.status)
             return order

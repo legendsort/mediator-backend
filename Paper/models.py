@@ -280,6 +280,7 @@ class Submit(TimeStampMixin):
             order.user = self.user
             order.status = self.status
             order.product = self
+            print("===============>", self.user, self.status)
             order.save()
             order.status_logs.add(self.status)
             return order
@@ -296,7 +297,7 @@ class Submit(TimeStampMixin):
 class UploadFile(TimeStampMixin):
     name = models.CharField(max_length=255)
     requirement = models.ForeignKey(Requirement, on_delete=models.CASCADE, related_name='submit_upload_paper_type')
-    upFile = models.FileField(upload_to=submit_upload_path)
+    file = models.FileField(upload_to=submit_upload_path)
     submit = models.ForeignKey(Submit, on_delete=models.CASCADE, related_name='submit_upload_file', null=True)
 
     class Meta:
@@ -323,22 +324,13 @@ class Resource(TimeStampMixin):
         error = []
         for file in files:
             try:
-
                 UpFile = apps.get_model('Contest.UploadFile')
                 m_file = UpFile()
-                
                 m_file.file = file
-                
                 m_file.name = str(file)
                 m_file.resource = self
-                print("name;", m_file.name)
-                # if UpFile.objects.filter(resource=self).exists():
-                #     UpFile.objects.filter(resouce=self).delete()
                 m_file.save()
-                print("asdfasdf")
-
                 index += 1
-                print("====", index)
 
             except Exception as e:
               print('----', e)
@@ -353,20 +345,18 @@ class Resource(TimeStampMixin):
         else:
             return None
 
-    def set_order(self, user=None, status=None, business_type=None) -> Order:
+    def set_order(self, user=None, status=None, codename=None) -> Order:
         try:
-            print("==== set order ====")
-            pass
-        #     if Order.objects.filter(order_resource=self).exists():
-        #         return Order.objects.get(order_resource=self)
-        #     else:
-        #         order = Order()
-        #         order.type = business_type
-        #         order.user = user
-        #         order.status = status
-        #         order.product = self
-        #         order.save()
-        #         return order        
+            if Order.objects.filter(order_resource=self).exists():
+                return Order.objects.get(order_resource=self)
+            else:
+                order = Order()                
+                order.type = apps.get_model('Account.BusinessType').objects.get(codename=codename)
+                order.user = user
+                order.status = Status.objects.get(name='New Submission')
+                order.product = self
+                order.save()
+                return order        
         except Exception as e:
             return False
 

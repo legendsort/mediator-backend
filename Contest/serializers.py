@@ -7,6 +7,6 @@ class UploadSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'name'
-            'file',
+            # 'file',
         ]
 

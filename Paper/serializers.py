@@ -2,7 +2,7 @@ from rest_framework import serializers
 from Paper.models import Journal, ReviewType, Country, ProductType, Frequency, Category,\
     Publisher, Article, Submit, Order, Author, Status, Requirement, UploadFile, OrderStatusLog, Resource
 
-
+from Contest.serializers import UploadSerializer
 class FrequencySerializer(serializers.ModelSerializer):
     class Meta:
         model = Frequency
@@ -212,8 +212,8 @@ class SubmitSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    type = serializers.PrimaryKeyRelatedField(read_only=True)
-    user = serializers.StringRelatedField(read_only=True)
+    user = serializers.IntegerField(read_only=True)
+    type = serializers.StringRelatedField(read_only=True)
     status = serializers.StringRelatedField(read_only=True)
 
     class Meta:
@@ -222,7 +222,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'id',
             'user',
             'type',
-            'status'     
+            'status',
         ]
 
 
@@ -250,35 +250,7 @@ class RequirementSerializer(serializers.ModelSerializer):
 
 class ResourceSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
-    order_type = serializers.SerializerMethodField(read_only=True)    
-    status = serializers.SerializerMethodField(read_only=True)
-    username = serializers.SerializerMethodField(read_only=True)
-    
-    def get_order_type(self, obj):
-        try:
-            order = obj.get_order()
-            if order.type:
-                return order.type.name
-            return None
-
-        except Exception as e:
-            return None
-
-    def get_status(self, obj):
-        try:
-            order = obj.get_order()
-            return order.status.name
-
-        except Exception as e:
-            return None  
-
-    def get_username(self, obj):
-        try:
-            order = obj.get_order()
-            return order.user.username
-
-        except Exception as e:
-            return None                      
+    upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True)
 
     class Meta:
         model = Resource
@@ -287,9 +259,9 @@ class ResourceSerializer(serializers.ModelSerializer):
             'title',
             'detail',
             'created_at',
-            'order_type',
-            'status',
-            'username'
+            'is_upload',
+            'is_allow',
+            'upload_files'
         ]        
 
 

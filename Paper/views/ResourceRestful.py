@@ -31,6 +31,7 @@ class ResourceFilter(django_filters.FilterSet):
 
 
 class ResourceViewSet(viewsets.ModelViewSet):
+
     permission_classes = [IsAuthenticated, ]
     serializer_class = Paper.serializers.ResourceSerializer
     pagination_class = StandardResultsSetPagination
@@ -145,4 +146,125 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 'response_code': False,
                 'data': [],
                 'message': 'Can not remove this  instance'
+            })
+
+
+class ResourceViewSet1(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = Paper.serializers.ResourceSerializer
+    pagination_class = StandardResultsSetPagination
+    renderer_classes = [JSONResponseRenderer]
+    filterset_class = ResourceFilter
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    queryset = Resource.objects.all()
+    ordering_fields = {
+        'title': 'title',
+        'id':'id',
+        'created_at': 'created_at'
+    }
+    ordering = ['created_at','title','id']
+
+    def get_base_data(self):
+        return filter_params(self.request.data, [
+            'title',
+            'created_at',
+            'id'
+        ])
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return ResourceDetailSerializer
+        
+        return Paper.serializers.ResourceSerializer
+
+    def create(self, request, *args, **kwargs):
+        instance = None
+        try:
+            base_data = self.get_base_data()
+            serializer = Paper.serializers.ResourceSerializer(data=base_data)
+            
+            if serializer.is_valid():
+                upload_files = request.data.getlist('files')
+                codename = request.data.get('type')
+                if not upload_files: 
+                    raise ValidationError('upload_files')
+                serializer.save()
+                instance = serializer.instance
+                instance.user = request.user
+                instance.set_upload_files(upload_files)
+                instance.save()
+                instance.set_order(request.user, 'New Resource', codename)
+                pass
+            else:
+                print(serializer.errors)
+                return JsonResponse({
+                    'response_code': False,
+                    'data': serializer.errors,
+                    'message': 'Duplicated name'
+                })
+            return JsonResponse({
+                'response_code': True,
+                'data': serializer.data,
+                'message': 'Successfully created!'
+            })
+        except Stauts.DoesNotExist:
+            if instance:
+                instance.delete()
+            pass
+        except BusinessType.DoesNotExist:
+            if instance:
+                instance.delete()
+            pass
+        except Exception as e:
+            print('----', e)
+            if instance:
+                instance.delete()            
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Failed create Resource'
+            })
+
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            self.perform_destroy(self.get_object())
+            return JsonResponse({
+                'response_code': True,
+                'data': [],
+                'message': 'Successfully removed!'
+            })
+        except django.db.DatabaseError:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Can not remove this  instance'
+            })
+
+    # update resource status
+    @action(detail=True, methods=['post'], url_path='update-status')
+    def update_status(self, request, pk=None):
+        instance = self.get_object()
+        try:
+            message = request.data.get('message')
+            status_id = request.data.get('status_id')
+            instance.update_status(Status.objects.get(pk=status_id), message=message)
+            instance.save()
+            return JsonResponse({
+                'response_code': True,
+                'data': self.get_serializer(instance).data,
+                'message': 'Submission has been updated'
+            })
+        except Status.DoesNotExist:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Please submit correct status"
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Server has error"
             })

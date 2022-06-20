@@ -7,7 +7,6 @@ from django.contrib.contenttypes.models import ContentType
 from Paper.helper import publisher_logo_path, journal_resource_path, submit_upload_path, censor_file_path
 from django.apps import apps
 
-
 class TimeStampMixin(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -229,7 +228,7 @@ class Submit(TimeStampMixin):
         for file in files:
             try:
                 m_file = UploadFile()
-                m_file.file = file
+                m_file.upFile = file
                 m_file.name = str(file)
                 m_file.submit = self
                 m_file.requirement = Requirement.objects.get(pk=require_ids[index])
@@ -315,9 +314,29 @@ class Resource(TimeStampMixin):
     title = models.CharField(max_length=255, null=True)
     detail = models.TextField(null=True)    
 
-    def upload_files(self):
+    def get_upload_files(self):
         UpFile = apps.get_model('Contest.UploadFile')
         return UpFile.objects.filter(resource=self)
+
+    def set_upload_files(self, files):
+        index = 0
+        error = []
+        for file in files:
+            try:
+                UpFile = apps.get_model('Contest.UploadFile')
+                m_file = UpFile()
+                m_file.file = file
+                m_file.name = str(file)
+                m_file.resource = self
+                m_file.save()
+                index += 1
+
+            except Exception as e:
+              print('----', e)
+
+   
+
+        return True
 
     def get_order(self):
         if Order.objects.filter(order_resource=self).exists():
@@ -325,15 +344,15 @@ class Resource(TimeStampMixin):
         else:
             return None
 
-    def set_order(self, user=None, status=None, business_type=None) -> Order:
+    def set_order(self, user=None, status=None, codename=None) -> Order:
         try:
             if Order.objects.filter(order_resource=self).exists():
                 return Order.objects.get(order_resource=self)
             else:
-                order = Order()
-                order.type = business_type
+                order = Order()                
+                order.type = apps.get_model('Account.BusinessType').objects.get(codename=codename)
                 order.user = user
-                order.status = status
+                order.status = Status.objects.get(name='New Submission')
                 order.product = self
                 order.save()
                 return order        

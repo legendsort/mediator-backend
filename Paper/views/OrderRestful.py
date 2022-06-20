@@ -46,54 +46,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         else:
             return orders.filter(pk=None)
 
-#  def create(self, request, *args, **kwargs):
-#         try:
-#             serializer = self.serializer_class(data=request.data)
-#             print(request.data)
-#             if serializer.is_valid():
-#                 request_data = request.data
-#                 type_id = request_data.get('type_id')
-#                 user_id = request_data.get('user_id')
-#                 print("type_id:", type_id)
-#                 print("user_id:", user_id)
-#                 if not type_id or not BusinessType.objects.filter(pk=type_id).exists():
-#                     raise ValidationError('type_id')
-#                 if not user_id or not User.filter(pk=user_id).exists():
-#                     raise ValidationError('user_id')
-#                 serializer.save()
-#                 instance = serializer.instance
-#                 instance.type = BusinessType.objects.get(pk=type_id)
-#                 instance.user = BusinessType.objects.get(pk=user_id)
-#                 instance.status = Status.objects.get(name='New Order')
-#                 instance.save()
-#                 instance.set_order()
-#                 print(instance.order.first())
-#             else:
-#                 print(serializer.errors)
-#                 return JsonResponse({
-#                     'response_code': False,
-#                     'data': serializer.errors,
-#                     'message': 'Your order has some errors. Please check details'
-#                 })
-#             return JsonResponse({
-#                 'response_code': True,
-#                 'data': serializer.data,
-#                 'message': 'Successfully create order!'
-#             })
-#         except ValidationError as e:
-#             return JsonResponse({
-#                 'response_code': False,
-#                 'data': str(e.message),
-#                 'message': f"Your submit has some errors. Please check details {str(e.message)}"
-#             })
-#         except Exception as e:
-#             print('----', e)
-#             return JsonResponse({
-#                 'response_code': False,
-#                 'data': [],
-#                 'message': 'Failed create journal'
-#             })
-            
+
     def create(self, request, *args, **kwargs):
         try:
             return JsonResponse({

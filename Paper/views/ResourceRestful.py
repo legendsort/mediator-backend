@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets, status
 import Paper.serializers
 from Paper.models import Journal, Publisher, Country, ReviewType, Category, ProductType, Frequency, Article, Status, Resource
-from Paper.serializers import JournalSerializer, PublisherSerializer, ResourceDetailSerializer, PublisherSimpleSerializer, JournalSimpleSerializer
+from Paper.serializers import JournalSerializer, PublisherSerializer, ResourceUploadSerializer, ResourceSerializer, PublisherSimpleSerializer, JournalSimpleSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
 from Paper.helper import StandardResultsSetPagination
@@ -31,127 +31,7 @@ class ResourceFilter(django_filters.FilterSet):
             'title': ['icontains']
         }
 
-
 class ResourceViewSet(viewsets.ModelViewSet):
-
-    permission_classes = [IsAuthenticated, ]
-    serializer_class = Paper.serializers.ResourceSerializer
-    pagination_class = StandardResultsSetPagination
-    renderer_classes = [JSONResponseRenderer]
-    filterset_class = ResourceFilter
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    queryset = Resource.objects.all()
-    ordering_fields = {
-        'title': 'title',
-        'id': 'id',
-        'created_at': 'created_at'
-    }
-    ordering = ['created_at', 'title', 'id']
-
-    def get_base_data(self):
-        return filter_params(self.request.data, [
-            'title',
-            'created_at',
-            'id'
-        ])
-
-    def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return ResourceDetailSerializer
-
-        return Paper.serializers.ResourceSerializer
-
-    def create(self, request, *args, **kwargs):
-        instance = None
-        try:
-            base_data = self.get_base_data()
-            serializer = Paper.serializers.ResourceSerializer(data=base_data)
-            type_id = request.data.get('type_id')
-            if serializer.is_valid():
-                serializer.save()
-                instance = serializer.instance
-                status = Status.objects.get(name='Requested')
-                business_type = BusinessType.objects.get(pk=type_id)
-                order = instance.set_order(user=request.user, status=status, business_type=business_type)
-            else:
-                print(serializer.errors)
-                return JsonResponse({
-                    'response_code': False,
-                    'data': serializer.errors,
-                    'message': 'Duplicated name'
-                })
-            return JsonResponse({
-                'response_code': True,
-                'data': serializer.data,
-                'message': 'Successfully created!'
-            })
-        except Stauts.DoesNotExist:
-            if instance:
-                instance.delete()
-            pass
-        except BusinessType.DoesNotExist:
-            if instance:
-                instance.delete()
-            pass
-        except Exception as e:
-            print('----', e)
-            if instance:
-                instance.delete()
-            return JsonResponse({
-                'response_code': False,
-                'data': [],
-                'message': 'Failed create journal'
-            })
-
-    def update(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-            serializer = Paper.serializers.ResourceSerializer(instance, data=self.get_base_data(), partial=True)
-            if serializer.is_valid():
-                order = instance.get_order()
-                if order and order.status == Status.objects.get(name='Requested'):
-                    type_id = request.data.get('type_id')
-                    business_type = BusinessType.objects.get(pk=type_id)
-                    order.type = business_type
-                    order.save()
-                    serializer.save()
-            else:
-                return JsonResponse({
-                    'response_code': False,
-                    'data': [],
-                    'message': serializer.errors
-                })
-            return JsonResponse({
-                'response_code': True,
-                'data': serializer.data,
-                'message': 'Journal has been updated'
-            })
-            pass
-        except Exception as e:
-            print(e)
-            return JsonResponse({
-                'response_code': False,
-                'data': [],
-                'message': 'server has error'
-            })
-
-    def destroy(self, request, *args, **kwargs):
-        try:
-            self.perform_destroy(self.get_object())
-            return JsonResponse({
-                'response_code': True,
-                'data': [],
-                'message': 'Successfully removed!'
-            })
-        except django.db.DatabaseError:
-            return JsonResponse({
-                'response_code': False,
-                'data': [],
-                'message': 'Can not remove this  instance'
-            })
-
-
-class ResourceViewSet1(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, ]
     serializer_class = Paper.serializers.ResourceSerializer
     pagination_class = StandardResultsSetPagination
@@ -168,26 +48,119 @@ class ResourceViewSet1(viewsets.ModelViewSet):
 
     def get_base_data(self):
         return filter_params(self.request.data, [
-            'title',
-            'created_at',
             'id'
+            'title',
+            'detail',
+            'created_at',
         ])
 
     def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return ResourceDetailSerializer
-        
-        return Paper.serializers.ResourceSerializer
-
+        if self.action == 'createUpload':
+            print("----serialize upload----")
+            return ResourceUploadSerializer
+        return ResourceSerializer
+    
     def create(self, request, *args, **kwargs):
         instance = None
         try:
             base_data = self.get_base_data()
-            serializer = Paper.serializers.ResourceSerializer(data=base_data)
+            serializer = self.get_serializer_class(data=base_data)
+            codename = request.data.get('codename')
+            if serializer.is_valid():
+                serializer.save()
+                instance = serializer.instance
+                status = Status.objects.get(name='Requested')
+                business_type = BusinessType.objects.get(codename=codename)
+                order = instance.set_order(user=request.user, status=status, business_type=business_type)
+            else:
+                print(serializer.errors)
+                return JsonResponse({
+                    'response_code': False,
+                    'data': serializer.errors,
+                    'message': 'Duplicated name'
+                })
+            return JsonResponse({
+                'response_code': True,
+                'data': serializer.data,
+                'message': 'Successfully normal resource created!'
+            })
+        except Status.DoesNotExist:
+            if instance:
+                instance.delete()
+            pass
+        except BusinessType.DoesNotExist:
+            if instance:
+                instance.delete()
+            pass
+        except Exception as e:
+            print('----', e)
+            if instance:
+                instance.delete()
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Failed create normal resource'
+            })
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer_class(instance, data=self.get_base_data(), partial=True)
+            if serializer.is_valid():
+                order = instance.get_order()
+                if order and order.status == Status.objects.get(name='Requested'):
+                    codename = request.data.get('codename')
+                    business_type = BusinessType.objects.get(codename = codename)
+                    order.type = business_type
+                    order.save()
+                    serializer.save()
+            else:
+                return JsonResponse({
+                    'response_code': False,
+                    'data': [],
+                    'message': serializer.errors
+                })
+            return JsonResponse({
+                'response_code': True,
+                'data': serializer.data,
+                'message': 'Resource has been updated'
+            })
+            pass
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'server has error'
+            })
+
+    
+    def destroy(self, request, *args, **kwargs):
+        try:
+            self.perform_destroy(self.get_object())
+            return JsonResponse({
+                'response_code': True,
+                'data': [],
+                'message': 'Successfully removed!'
+            })
+        except django.db.DatabaseError:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Can not remove this  instance'
+            })
+
+    # upload resource create
+    @action(detail=True, methods=['post'], url_path='create-upload')
+    def createUpload(self, request, *args, **kwargs):
+        instance = None
+        try:
+            base_data = self.get_base_data()
+            serializer = self.get_serializer_class()(data=base_data)
             
             if serializer.is_valid():
                 upload_files = request.data.getlist('files')
-                codename = request.data.get('type')
+                codename = request.data.get('codename')
                 if not upload_files: 
                     raise ValidationError('upload_files')
                 serializer.save()
@@ -195,7 +168,7 @@ class ResourceViewSet1(viewsets.ModelViewSet):
                 instance.user = request.user
                 instance.set_upload_files(upload_files)
                 instance.save()
-                instance.set_order(request.user, 'New Resource', codename)
+                instance.set_order(request.user, 'New upload resource', codename)
                 pass
             else:
                 print(serializer.errors)
@@ -224,24 +197,9 @@ class ResourceViewSet1(viewsets.ModelViewSet):
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': 'Failed create Resource'
+                'message': 'Failed to create Resource'
             })
 
-
-    def destroy(self, request, *args, **kwargs):
-        try:
-            self.perform_destroy(self.get_object())
-            return JsonResponse({
-                'response_code': True,
-                'data': [],
-                'message': 'Successfully removed!'
-            })
-        except django.db.DatabaseError:
-            return JsonResponse({
-                'response_code': False,
-                'data': [],
-                'message': 'Can not remove this  instance'
-            })
 
     # update resource status
     @action(detail=True, methods=['post'], url_path='update-status')
@@ -270,3 +228,5 @@ class ResourceViewSet1(viewsets.ModelViewSet):
                 'data': [],
                 'message': "Server has error"
             })
+            
+    

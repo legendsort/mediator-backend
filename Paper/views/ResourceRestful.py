@@ -4,10 +4,10 @@ from rest_framework.decorators import action
 
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 import Paper.serializers
-from Paper.models import Journal, Publisher, Country, ReviewType, Category, ProductType, Frequency, Article, Status, Resource
-from Paper.serializers import JournalSerializer, PublisherSerializer, ResourceDetailSerializer, PublisherSimpleSerializer, JournalSimpleSerializer
+from Paper.models import Journal, Publisher, Country, ReviewType, Category, Frequency, Status, Resource
+from Paper.serializers import JournalSerializer, PublisherSerializer, ResourceDetailSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
 from Paper.helper import StandardResultsSetPagination
@@ -33,7 +33,6 @@ class ResourceFilter(django_filters.FilterSet):
 
 
 class ResourceViewSet(viewsets.ModelViewSet):
-
     permission_classes = [IsAuthenticated, ]
     serializer_class = Paper.serializers.ResourceSerializer
     pagination_class = StandardResultsSetPagination

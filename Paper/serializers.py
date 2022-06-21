@@ -248,6 +248,7 @@ class RequirementSerializer(serializers.ModelSerializer):
             'file_type'
         ]
 
+
 class ResourceSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
     upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True)
@@ -276,6 +277,7 @@ class ResourceDetailSerializer(serializers.ModelSerializer):
 
         except Exception as e:
             return None
+
     def get_type_id(self, obj):
         try:
             order = obj.get_order()

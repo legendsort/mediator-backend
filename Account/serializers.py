@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from Account.models import Role, Permission, User, BusinessType, Unit, CustomerProfile, RemoteAccount, Notice
+from Account.models import Role, Permission, User, BusinessType, Unit, CustomerProfile, RemoteAccount, Notice, Post, Comment
 from django.apps import apps
 
 
@@ -166,4 +166,35 @@ class NoticeSerializer(serializers.ModelSerializer):
         ]
 
 
+#
+class CommentSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+    post = serializers.PrimaryKeyRelatedField(read_only=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
 
+    class Meta:
+        model = Comment
+        fields = [
+            'id',
+            'content',
+            'post',
+            'user',
+        ]
+
+
+#
+class PostSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField(read_only=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    comments = CommentSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Post
+        fields = [
+            'id',
+            'title',
+            'author',
+            'body',
+            'comments',
+            'created_at'
+        ]

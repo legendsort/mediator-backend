@@ -22,6 +22,7 @@ from Paper.helper import filter_params, SubmissionStatus
 from Paper.services import SubmissionService
 from Account.models import User, BusinessType
 
+
 # Submit API
 class SubmitFilter(django_filters.FilterSet):
 

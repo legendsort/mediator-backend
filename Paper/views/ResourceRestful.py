@@ -57,7 +57,6 @@ class ResourceViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return ResourceDetailSerializer
-
         return Paper.serializers.ResourceSerializer
 
     def create(self, request, *args, **kwargs):
@@ -225,7 +224,6 @@ class ResourceViewSet1(viewsets.ModelViewSet):
                 'data': [],
                 'message': 'Failed create Resource'
             })
-
 
     def destroy(self, request, *args, **kwargs):
         try:

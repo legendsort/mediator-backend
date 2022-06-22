@@ -17,6 +17,7 @@ from Paper.policies import PublisherAccessPolicy
 from Paper.helper import filter_params
 from Account.models import BusinessType
 from rest_framework_tricks.filters import OrderingFilter
+from django.apps import apps
 
 
 class ResourceFilter(django_filters.FilterSet):
@@ -33,7 +34,7 @@ class ResourceFilter(django_filters.FilterSet):
 
 class ResourceViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, ]
-    serializer_class = Paper.serializers.ResourceSerializer
+    serializer_class = Paper.serializers.ResourceUploadSerializer
     pagination_class = StandardResultsSetPagination
     renderer_classes = [JSONResponseRenderer]
     filterset_class = ResourceFilter
@@ -58,13 +59,13 @@ class ResourceViewSet(viewsets.ModelViewSet):
         if self.action == 'createUpload':
             print("----serialize upload----")
             return ResourceUploadSerializer
-        return ResourceSerializer
+        return ResourceUploadSerializer
     
     def create(self, request, *args, **kwargs):
         instance = None
         try:
             base_data = self.get_base_data()
-            serializer = self.get_serializer_class(data=base_data)
+            serializer = ResourceUploadSerializer(data=base_data)
             codename = request.data.get('codename')
             if serializer.is_valid():
                 serializer.save()
@@ -105,7 +106,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = self.get_serializer_class(instance, data=self.get_base_data(), partial=True)
+            serializer = ResourceUploadSerializer(instance, data=self.get_base_data(), partial=True)
             if serializer.is_valid():
                 order = instance.get_order()
                 if order and order.status == Status.objects.get(name='Requested'):
@@ -151,12 +152,12 @@ class ResourceViewSet(viewsets.ModelViewSet):
             })
 
     # upload resource create
-    @action(detail=True, methods=['post'], url_path='create-upload')
-    def createUpload(self, request, *args, **kwargs):
+    @action(detail=False, methods=['post'], url_path='create-upload')
+    def createUpload(self, request):
         instance = None
         try:
             base_data = self.get_base_data()
-            serializer = self.get_serializer_class()(data=base_data)
+            serializer = ResourceUploadSerializer(data=base_data)
             
             if serializer.is_valid():
                 upload_files = request.data.getlist('files')
@@ -168,7 +169,9 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 instance.user = request.user
                 instance.set_upload_files(upload_files)
                 instance.save()
-                instance.set_order(request.user, 'New upload resource', codename)
+                type = apps.get_model('Account.BusinessType').objects.get(codename=codename)
+                status = Status.objects.get(name='New upload resource')
+                instance.set_order(request.user, status, type)
                 pass
             else:
                 print(serializer.errors)
@@ -182,7 +185,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 'data': serializer.data,
                 'message': 'Successfully created!'
             })
-        except Stauts.DoesNotExist:
+        except Status.DoesNotExist:
             if instance:
                 instance.delete()
             pass

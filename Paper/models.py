@@ -344,15 +344,15 @@ class Resource(TimeStampMixin):
         else:
             return None
 
-    def set_order(self, user=None, status=None, codename=None) -> Order:
+    def set_order(self, user=None, status=None, business_type=None) -> Order:
         try:
             if Order.objects.filter(order_resource=self).exists():
                 return Order.objects.get(order_resource=self)
             else:
                 order = Order()                
-                order.type = apps.get_model('Account.BusinessType').objects.get(codename=codename)
+                order.type = business_type
                 order.user = user
-                order.status = Status.objects.get(name='New Submission')
+                order.status = status
                 order.product = self
                 order.save()
                 return order        

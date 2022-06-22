@@ -358,6 +358,15 @@ class Resource(TimeStampMixin):
                 return order        
         except Exception as e:
             return False
+        
+    def update_status(self, status, message=None):
+        self.status = status
+        order = self.set_order()
+        order.status = status
+        order.status_logs.add(self.status, through_defaults={'message': message})
+        order.save()
+        self.save()
+
 
 
 class Author(TimeStampMixin):

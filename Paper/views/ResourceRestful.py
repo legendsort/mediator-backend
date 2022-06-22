@@ -183,7 +183,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
             return JsonResponse({
                 'response_code': True,
                 'data': serializer.data,
-                'message': 'Successfully created!'
+                'message': 'Successfully upload resource created!'
             })
         except Status.DoesNotExist:
             if instance:
@@ -200,7 +200,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': 'Failed to create Resource'
+                'message': 'Failed to create upload Resource'
             })
 
 
@@ -211,12 +211,13 @@ class ResourceViewSet(viewsets.ModelViewSet):
         try:
             message = request.data.get('message')
             status_id = request.data.get('status_id')
+            print(status_id)
             instance.update_status(Status.objects.get(pk=status_id), message=message)
             instance.save()
             return JsonResponse({
                 'response_code': True,
                 'data': self.get_serializer(instance).data,
-                'message': 'Submission has been updated'
+                'message': 'Upload resource has been updated'
             })
         except Status.DoesNotExist:
             return JsonResponse({

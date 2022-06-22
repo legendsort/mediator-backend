@@ -425,31 +425,3 @@ class NoticeViewSet(viewsets.ModelViewSet):
                 'data': [],
                 'message': 'Server has error'
             })
-
-
-# Post
-class PostFilter(django_filters.FilterSet):
-    title = django_filters.CharFilter(field_name='title', lookup_expr='icontains')
-    user = django_filters.NumberFilter(method='search_by_user', lookup_expr='exact')
-
-    class Meta:
-        model = Post
-        fields = {
-            'title': ['icontains']
-        }
-
-    @staticmethod
-    def search_by_user(queryset, name, value):
-        return queryset.filter()
-
-
-class PostViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, ]
-    serializer_class = Account.serializers.PostSerializer
-    renderer_classes = [JSONResponseRenderer, ]
-    filter_backends = [DjangoFilterBackend, ]
-    filterset_class = PostFilter
-
-    def get_queryset(self):
-        return Post.objects.all()
-

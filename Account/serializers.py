@@ -169,7 +169,6 @@ class NoticeSerializer(serializers.ModelSerializer):
 #
 class CommentSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    post = serializers.PrimaryKeyRelatedField(read_only=True)
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
 
     class Meta:
@@ -177,7 +176,7 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'content',
-            'post',
+            'created_at',
             'user',
         ]
 
@@ -186,7 +185,7 @@ class CommentSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.StringRelatedField(read_only=True)
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
-    comments = CommentSerializer(many=True, read_only=True)
+    comments = CommentSerializer(source='get_comments', many=True, read_only=True)
 
     class Meta:
         model = Post

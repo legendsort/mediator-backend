@@ -10,7 +10,6 @@ router.register(r'role', RoleViewSet, basename='role')
 router.register(r'permission', PermissionViewSet, basename='permission')
 router.register(r'notice', NoticeViewSet, basename='notice')
 router.register(r'post', PostViewSet, basename='post')
-router.register(r'comment', PostViewSet, basename='comment')
 
 urlpatterns = [
     path(r'', include(router.urls))

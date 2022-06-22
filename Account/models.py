@@ -219,9 +219,9 @@ class Message(models.Model):
 
 
 class Post(TimeStampMixin):
-    author = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user_post')
+    author = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user_post', null=True)
     title = models.CharField(max_length=255)
-    body = models.TextField(null=True)
+    body = models.JSONField(null=True)
 
     class Meta:
         verbose_name = _("Post")
@@ -232,6 +232,9 @@ class Post(TimeStampMixin):
 
     def __str__(self):
         return f"{self.author}:{self.title}"
+
+    def get_comments(self):
+        return Comment.objects.filter(post=self)
 
 
 class Comment(TimeStampMixin):

@@ -317,6 +317,7 @@ class Resource(TimeStampMixin):
     is_allow = models.BooleanField(default=False)
     title = models.CharField(max_length=255, null=True)
     detail = models.TextField(null=True)    
+    dealer = models.ForeignKey('Account.User', on_delete=models.DO_NOTHING, related_name='resource_dealer', null=True)
 
     def get_upload_files(self):
         UpFile = apps.get_model('Contest.UploadFile')

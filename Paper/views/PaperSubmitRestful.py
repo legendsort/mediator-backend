@@ -11,7 +11,7 @@ from rest_framework import viewsets, status
 import Paper.serializers
 from Paper.models import Journal, Publisher, Country, ReviewType, Submit, UploadFile, Requirement,\
     Order, Frequency, Article, Status
-from Paper.serializers import JournalSerializer, PublisherSerializer
+from Paper.serializers import JournalSerializer, PublisherSerializer, SubmitListSerializer, SubmitSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
 from Bank.views import StandardResultsSetPagination
@@ -62,6 +62,12 @@ class SubmitViewSet(viewsets.ModelViewSet):
         else:
             return Submit.objects.filter(pk=None)
 
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return SubmitListSerializer
+        else:
+            return SubmitSerializer
+
     # new submit paper request
     def create(self, request, *args, **kwargs):
         try:
@@ -87,7 +93,6 @@ class SubmitViewSet(viewsets.ModelViewSet):
                 instance.journal = Journal.objects.get(pk=journal_id)
                 authors = json.loads(authors)
                 result = instance.set_authors(authors)
-
                 if len(result):
                     instance.delete()
                     return JsonResponse({
@@ -100,7 +105,7 @@ class SubmitViewSet(viewsets.ModelViewSet):
                 instance.status = Status.objects.get(name='New Submission')
                 instance.save()
                 instance.set_order()
-                print(instance.order.first())
+
             else:
                 print(serializer.errors)
                 return JsonResponse({
@@ -310,4 +315,26 @@ class SubmitViewSet(viewsets.ModelViewSet):
                 'message': 'Server has errors'
             })
 
+    @action(detail=True, methods=['get'], url_path='fetch-status-logs')
+    def fetch_status(self, request, pk=None):
+        instance = self.get_object()
+        try:
+            return JsonResponse({
+                'response_code': True,
+                'data': self.get_serializer(instance).data['status_logs'],
+                'message': 'Submission has been updated'
+            })
+        except Status.DoesNotExist:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Please submit correct status"
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Server has error"
+            })
 

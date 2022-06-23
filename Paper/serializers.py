@@ -181,9 +181,25 @@ class UploadFileSerializer(serializers.ModelSerializer):
         ]
 
 
+class StatusLogsSerializer(serializers.ModelSerializer):
+    status = serializers.StringRelatedField(read_only=True)
+    order = serializers.PrimaryKeyRelatedField(read_only=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
+
+    class Meta:
+        model = OrderStatusLog
+        fields = [
+            'id',
+            'order',
+            'message',
+            'status',
+            'created_at'
+        ]
+
+
 class SubmitSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    contactor = serializers.StringRelatedField(read_only=True)
+    dealer = serializers.StringRelatedField(read_only=True)
     article = serializers.PrimaryKeyRelatedField(read_only=True)
     abstract = serializers.CharField(required=True)
     keywords = serializers.CharField(required=True)
@@ -192,8 +208,11 @@ class SubmitSerializer(serializers.ModelSerializer):
     upload_files = UploadFileSerializer(source='get_upload_files',  read_only=True, many=True)
     status = serializers.StringRelatedField(read_only=True)
     message = serializers.SerializerMethodField(read_only=True)
+    status_logs = StatusLogsSerializer(source='get_status_logs', many=True, read_only=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
 
-    def get_message(self, obj):
+    @staticmethod
+    def get_message(obj):
         try:
             order = obj.set_order()
             return OrderStatusLog.objects.filter(status=obj.status, order=order).first().message
@@ -212,11 +231,69 @@ class SubmitSerializer(serializers.ModelSerializer):
             'keywords',
             'major',
             'journal',
-            'contactor',
             'authors',
             'upload_files',
             'status',
-            'message'
+            'dealer',
+            'message',
+            'created_at',
+            'status_logs'
+        ]
+
+
+class SubmitListSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+    order_id = serializers.SerializerMethodField(read_only=True)
+    dealer = serializers.StringRelatedField(read_only=True)
+    article = serializers.StringRelatedField(read_only=True)
+    journal = serializers.StringRelatedField(read_only=True)
+    status = serializers.StringRelatedField(read_only=True)
+    message = serializers.SerializerMethodField(read_only=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    last_updated_at = serializers.SerializerMethodField(read_only=True)
+
+    @staticmethod
+    def get_message(obj):
+        try:
+            order = obj.set_order()
+            return OrderStatusLog.objects.filter(status=obj.status, order=order).first().message
+        except Exception as e:
+            print('-->', e)
+            return ''
+
+    @staticmethod
+    def get_order_id(obj):
+        try:
+            order = obj.set_order()
+            return order.id
+        except Exception as e:
+            print('-->', e)
+            return ''
+
+    @staticmethod
+    def get_last_updated_at(obj):
+        try:
+            order = obj.set_order()
+            return OrderStatusLog.objects.filter(status=obj.status, order=order).first().created_at.strftime("%Y-%m-%d %H:%M:%S")
+        except Exception as e:
+            print('-->', e)
+            return ''
+
+    class Meta:
+        model = Submit
+        fields = [
+            'id',
+            'user',
+            'order_id',
+            'article',
+            'title',
+            'abstract',
+            'journal',
+            'status',
+            'dealer',
+            'message',
+            'created_at',
+            'last_updated_at'
         ]
 
 
@@ -304,3 +381,4 @@ class ResourceDetailSerializer(serializers.ModelSerializer):
             'created_at',            
             'type_id'
         ] 
+

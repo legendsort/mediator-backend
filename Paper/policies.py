@@ -20,7 +20,7 @@ class PublisherAccessPolicy(AccessPolicy):
 class SubmissionAccessPolicy(AccessPolicy):
     statements = [
         {
-            "action": ["list", "retrieve", "create", "update", "partial_update"],
+            "action": ["list", "retrieve", "create", "update", "partial_update", "fetch_status"],
             "principal": "*",
             "condition_expression": ["has_perms:mediate_paper or has_perms:manage_paper or has_perms:view_paper"],
             "effect": "allow"

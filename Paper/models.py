@@ -297,6 +297,10 @@ class Submit(TimeStampMixin):
         order.save()
         self.save()
 
+    def get_status_logs(self):
+        order = self.set_order()
+        return OrderStatusLog.objects.filter(order=order)
+
 
 class UploadFile(TimeStampMixin):
     name = models.CharField(max_length=255)

@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets
 import Paper.serializers
 from Paper.models import Journal, Publisher, Country, ReviewType, Category, ProductType, Frequency, Article, Status, Resource
-from Paper.serializers import JournalSerializer, PublisherSerializer, ResourceUploadSerializer, ResourceSerializer, PublisherSimpleSerializer, JournalSimpleSerializer
+from Paper.serializers import JournalSerializer, PublisherSerializer, ResourceUploadSerializer, ResourceSerializer, ResourceDetailSerializer,PublisherSimpleSerializer, JournalSimpleSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
 from Paper.helper import StandardResultsSetPagination
@@ -46,7 +46,8 @@ class ResourceViewSet(viewsets.ModelViewSet):
         'created_at': 'created_at'
     }
     ordering = ['created_at','title','id']
-
+   
+   
     def get_base_data(self):
         return filter_params(self.request.data, [
             'id'
@@ -59,6 +60,8 @@ class ResourceViewSet(viewsets.ModelViewSet):
         if self.action == 'createUpload':
             print("----serialize upload----")
             return ResourceUploadSerializer
+        elif self.action == 'fetch':
+            return ResourceDetailSerializer
         return ResourceUploadSerializer
     
     def create(self, request, *args, **kwargs):
@@ -149,6 +152,26 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 'response_code': False,
                 'data': [],
                 'message': 'Can not remove this  instance'
+            })
+            
+    # fetch resource
+    @action(detail=False, methods=['get'], url_path='fetch')
+    def fetch(self, request):
+        try:
+            serializer = ResourceDetailSerializer(self.queryset, many=True)
+            
+            return JsonResponse({
+                'response_code': True,
+                'data': serializer.data,
+                'message': 'Fetch detailed resource succeed'
+            })
+
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Server has error"
             })
 
     # upload resource create

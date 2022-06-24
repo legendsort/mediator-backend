@@ -40,7 +40,6 @@ class SubmitViewSet(viewsets.ModelViewSet):
     filterset_class = SubmitFilter
     renderer_classes = [JSONResponseRenderer, ]
     filter_backends = [DjangoFilterBackend, ]
-    queryset = Submit.objects.all()
 
     def get_base_data(self):
         return filter_params(self.request.data, [

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from Paper.models import Journal, ReviewType, Country, ProductType, Frequency, Category,\
     Publisher, Article, Submit, Order, Author, Status, Requirement, UploadFile, OrderStatusLog, Resource
 from Contest.serializers import UploadSerializer
-
+from Account.serializers import BusinessSerializer, UserDetailSerializer
 
 class FrequencySerializer(serializers.ModelSerializer):
     class Meta:
@@ -394,5 +394,62 @@ class ResourceSerializer(serializers.ModelSerializer):
             'detail',
             'created_at',            
             'type_id'
+        ] 
+
+
+class ResourceDetailSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)    
+    type = serializers.SerializerMethodField(read_only=True)
+    upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True)
+    user = serializers.SerializerMethodField(read_only=True)
+    status = serializers.SerializerMethodField(read_only=True)
+
+    def get_order(self, obj):
+        try:
+            order = obj.get_order()
+            return OrderSerializer(order).data
+
+        except Exception as e:
+            print(e)
+            return None
+
+    def get_type(self, obj):
+        try:
+            order = obj.get_order()           
+            return BusinessSerializer(order.type).data.get('name')
+
+        except Exception as e:
+            print(e)
+            return None
+    def get_user(self, obj):
+        try:
+            order = obj.get_order()           
+            return UserDetailSerializer(order.user).data.get('username')
+
+        except Exception as e:
+            print(e)
+            return None
+
+    def get_status(self, obj):
+        try:
+            order = obj.get_order()           
+            return StatusSerializer(order.status).data.get('name')
+
+        except Exception as e:
+            print(e)
+            return None
+
+
+    class Meta:
+        model = Resource
+        fields = [
+            'id',
+            'title',
+            'detail',
+            'created_at',            
+            'type',
+            'user',
+            'status',
+            'upload_files'
         ] 
 

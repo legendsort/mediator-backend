@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 import Paper.serializers
 from Paper.models import Journal, Publisher, Country, ReviewType, Category, ProductType, Frequency, Article, Status, Resource
 from Paper.serializers import JournalSerializer, PublisherSerializer, ResourceUploadSerializer, ResourceSerializer, PublisherSimpleSerializer, JournalSimpleSerializer
@@ -203,6 +203,20 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 'message': 'Failed to create upload Resource'
             })
 
+    def destroy(self, request, *args, **kwargs):
+        try:
+            self.perform_destroy(self.get_object())
+            return JsonResponse({
+                'response_code': True,
+                'data': [],
+                'message': 'Successfully removed!'
+            })
+        except django.db.DatabaseError:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Can not remove this  instance'
+            })
 
     # update resource status
     @action(detail=True, methods=['post'], url_path='update-status')

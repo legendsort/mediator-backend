@@ -100,7 +100,7 @@ class DecoratedTokenBlacklistView(TokenBlacklistView):
         return super().post(request, *args, **kwargs)
 
 
-# test
+# test case
 def test(request):
     return render(request, 'index.html')
 

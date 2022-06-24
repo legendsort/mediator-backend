@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets
 import Account.serializers
-from Account.models import BusinessType, Unit, Permission, Role, Notice, User
+from Account.models import BusinessType, Unit, Permission, Role, Notice, User, Post, Comment
 from Account.serializers import BusinessSerializer, UserOutSideSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer

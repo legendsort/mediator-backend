@@ -228,19 +228,20 @@ class Submit(TimeStampMixin):
         for file in files:
             try:
                 m_file = UploadFile()
-                m_file.upFile = file
+                m_file.file = file
                 m_file.name = str(file)
                 m_file.submit = self
                 m_file.requirement = Requirement.objects.get(pk=require_ids[index])
                 if UploadFile.objects.filter(submit=self, requirement=m_file.requirement).exists():
                     UploadFile.objects.filter(submit=self, requirement=m_file.requirement).delete()
                 m_file.save()
-
                 index += 1
             except Requirement.DoesNotExist:
+                print('incorrect requirement id')
                 error.append('incorrect requirement id')
                 continue
             except django.db.DatabaseError:
+                print(' duplicated id')
                 error.append('duplicated')
 
         return True
@@ -260,6 +261,9 @@ class Submit(TimeStampMixin):
                         serializer.save()
                         serializer.instance.submit = self
                         serializer.instance.save()
+                        if Country.objects.filter(id=author.get('country_id')).exists():
+                            serializer.instance.country = Country.objects.get(pk=author.get('country_id'))
+                            serializer.instance.save()
                     else:
                         errors.append(serializer.errors)
                         continue
@@ -293,6 +297,10 @@ class Submit(TimeStampMixin):
         order.save()
         self.save()
 
+    def get_status_logs(self):
+        order = self.set_order()
+        return OrderStatusLog.objects.filter(order=order)
+
 
 class UploadFile(TimeStampMixin):
     name = models.CharField(max_length=255)
@@ -313,6 +321,7 @@ class Resource(TimeStampMixin):
     is_allow = models.BooleanField(default=False)
     title = models.CharField(max_length=255, null=True)
     detail = models.TextField(null=True)    
+    dealer = models.ForeignKey('Account.User', on_delete=models.DO_NOTHING, related_name='resource_dealer', null=True)
 
     def get_upload_files(self):
         UpFile = apps.get_model('Contest.UploadFile')

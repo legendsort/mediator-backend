@@ -50,7 +50,6 @@ class ResourceViewSet(viewsets.ModelViewSet):
    
     def get_base_data(self):
         return filter_params(self.request.data, [
-            'id'
             'title',
             'detail',
             'created_at',
@@ -180,13 +179,15 @@ class ResourceViewSet(viewsets.ModelViewSet):
         instance = None
         try:
             base_data = self.get_base_data()
-            serializer = ResourceUploadSerializer(data=base_data)
+            print(request.data)
             
+            serializer = ResourceUploadSerializer(data=base_data)
             if serializer.is_valid():
                 upload_files = request.data.getlist('files')
                 codename = request.data.get('codename')
                 if not upload_files: 
                     raise ValidationError('upload_files')
+                
                 serializer.save()
                 instance = serializer.instance
                 instance.user = request.user

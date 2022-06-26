@@ -183,9 +183,9 @@ class ResourceViewSet(viewsets.ModelViewSet):
             instance = self.get_object()
             serializer = self.get_serializer(instance)
             return JsonResponse({
-                'response_code': False,
+                'response_code': True,
                 'data': serializer.data,
-                'message': "Server has error"
+                'message': "Fetch succeed"
             })
 
         except Exception as e:

@@ -50,7 +50,6 @@ class ResourceViewSet(viewsets.ModelViewSet):
    
     def get_base_data(self):
         return filter_params(self.request.data, [
-            'id'
             'title',
             'detail',
             'created_at',
@@ -159,12 +158,14 @@ class ResourceViewSet(viewsets.ModelViewSet):
     def fetch(self, request):
         try:
             serializer = ResourceDetailSerializer(self.queryset, many=True)
-            
-            return JsonResponse({
-                'response_code': True,
-                'data': serializer.data,
-                'message': 'Fetch detailed resource succeed'
-            })
+            queryset = self.filter_queryset(self.get_queryset())
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
+
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
 
         except Exception as e:
             print(e)
@@ -180,13 +181,15 @@ class ResourceViewSet(viewsets.ModelViewSet):
         instance = None
         try:
             base_data = self.get_base_data()
-            serializer = ResourceUploadSerializer(data=base_data)
+            print(request.data)
             
+            serializer = ResourceUploadSerializer(data=base_data)
             if serializer.is_valid():
                 upload_files = request.data.getlist('files')
                 codename = request.data.get('codename')
                 if not upload_files: 
                     raise ValidationError('upload_files')
+                
                 serializer.save()
                 instance = serializer.instance
                 instance.user = request.user

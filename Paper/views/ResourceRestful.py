@@ -59,7 +59,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
         if self.action == 'createUpload':
             print("----serialize upload----")
             return ResourceUploadSerializer
-        elif self.action == 'fetch':
+        elif self.action == 'fetch' or self.action == 'fetchDetail':
             return ResourceDetailSerializer
         return ResourceUploadSerializer
     
@@ -166,6 +166,27 @@ class ResourceViewSet(viewsets.ModelViewSet):
 
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
+
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Server has error"
+            })
+
+
+    # fetch resource
+    @action(detail=True, methods=['get'], url_path='fetch-detail')
+    def fetchDetail(self, request, pk=None):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(instance)
+            return JsonResponse({
+                'response_code': True,
+                'data': serializer.data,
+                'message': "Fetch succeed"
+            })
 
         except Exception as e:
             print(e)

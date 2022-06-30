@@ -96,10 +96,19 @@ class DataViewSet(ModelViewSet):
         try:
             page_number = request.query_params.get('pageNumber', 1)
             page_size = request.query_params.get('pageSize', 10)
+            message = request.query_params.get('message')
+            status = request.query_params.get('status')
+            start_time = request.query_params.get('start_time')
+            end_time = request.query_params.get('end_time')
+            
             bank = BankService()
             response_code, response_data = bank.fetch_crawling_logs(params={
                 'pageNumber': page_number,
-                'pageSize': page_size
+                'pageSize': page_size,
+                'status': status,
+                'message': message,
+                'start_time': start_time,
+                'end_time': end_time
             })
             return JsonResponse({
                 'response_code': response_code,

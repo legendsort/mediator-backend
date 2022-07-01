@@ -7,6 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework import status
 
+from django.apps import apps
 
 class FTPViewSet(viewsets.ViewSet):
     """
@@ -124,13 +125,19 @@ class FTPViewSet(viewsets.ViewSet):
             service = FTPService(token=str(refresh.access_token))
             upload_files = []
 
-            for file in self.request.FILES.getlist('files'):
-                upload = Upload(user=self.request.user, file=file)
-                upload.save()
-                upload_files.append(upload)
-
-            response_code, response = service.copy(dst_path=request.data.get('dst_path', '/'),
-                                                   src_path=request.data.get('src_path', '/'))
+            # for file in self.request.FILES.getlist('files'):
+                # upload = Upload(user=self.request.user, file=file)
+                # upload.save()
+                # UpFile = apps.get_model('Contest.UploadFile')
+                # m_file = UpFile()
+                # m_file.file = file
+                # m_file.name = str(file)
+                # m_file.resource = self
+                # m_file.save()
+                # upload_files.append(UpFile)
+            files= self.request.FILES['files'].file.getvalue() 
+            # print(files)
+            service.upload(files)
             return Response({
                 'response_code': True,
                 'message': 'message',

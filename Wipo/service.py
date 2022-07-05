@@ -70,12 +70,14 @@ class FTPService(APIBaseService):
         try:
             src_path = request.data.get('src_path')
             files = request.data.getlist('files')
+            print(files)
             for file in files:
                 req.post(f"{url}", headers={'Authorization': f"Bearer {self.token}"}, data={'srcPath': src_path}, files={'file': file})
             pass
-                    
+            return True
         except Exception as e:
             print('=====>', e)
+            return False
             
             
         

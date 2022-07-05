@@ -137,9 +137,9 @@ class FTPViewSet(viewsets.ViewSet):
                 # upload_files.append(UpFile)
             # files= self.request.FILES['files'].file.getvalue() 
             # print(files)
-            service.upload(request=self.request)
+            response_code = service.upload(request=self.request)
             return Response({
-                'response_code': True,
+                'response_code': response_code,
                 'message': 'message',
                 'data': []
             })

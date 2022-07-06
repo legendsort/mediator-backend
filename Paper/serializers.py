@@ -336,7 +336,7 @@ class RequirementSerializer(serializers.ModelSerializer):
 
 class ResourceUploadSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
-    upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True)
+    upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True, required=False)
 
     def get_order(self, obj):
         try:

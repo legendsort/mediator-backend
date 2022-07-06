@@ -124,7 +124,7 @@ class FTPViewSet(viewsets.ViewSet):
             refresh = RefreshToken.for_user(self.request.user)
             service = FTPService(token=str(refresh.access_token))
             upload_files = []
-
+        
             # for file in self.request.FILES.getlist('files'):
                 # upload = Upload(user=self.request.user, file=file)
                 # upload.save()
@@ -135,11 +135,11 @@ class FTPViewSet(viewsets.ViewSet):
                 # m_file.resource = self
                 # m_file.save()
                 # upload_files.append(UpFile)
-            files= self.request.FILES['files'].file.getvalue() 
+            # files= self.request.FILES['files'].file.getvalue() 
             # print(files)
-            service.upload(files)
+            response_code = service.upload(request=self.request)
             return Response({
-                'response_code': True,
+                'response_code': response_code,
                 'message': 'message',
                 'data': []
             })

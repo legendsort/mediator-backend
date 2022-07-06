@@ -1,9 +1,9 @@
 from Account.services import APIBaseService
 from django.conf import settings
-import requests
+import requests as req
 from rest_framework.response import Response
 from requests_toolbelt.multipart.encoder import MultipartEncoder
-
+import json
 
 class FTPService(APIBaseService):
 
@@ -12,7 +12,7 @@ class FTPService(APIBaseService):
         self.headers = {
             'Accept': '*/*',
             'Authorization': f"Bearer {token}",
-            "Content-Type":"multipart/form-data"
+            'Content-Type': 'application/json',
         }
         self.token = token
         self.username = None
@@ -65,24 +65,19 @@ class FTPService(APIBaseService):
             'dstPath': dst_path,
         })
 
-    def upload(self, files):
+    def upload(self, request):
         url = f"{self.base_url}/upload"
         try:
-            multipart_data = MultipartEncoder(fields={
-                    # a file upload field
-                    'file': files,
-                    'field0': 'value0', 
-                    'field1': 'value1',
-                }
-            )
-
-            return requests.post(url, headers={'Content-Type': multipart_data.content_type}, data=multipart_data )
-            # return self.call(url=url, data={
-            # 'srcPath': '/',
-            # 'file': {'file': files}
-            # })
+            src_path = request.data.get('src_path')
+            files = request.data.getlist('files')
+            print(files)
+            for file in files:
+                req.post(f"{url}", headers={'Authorization': f"Bearer {self.token}"}, data={'srcPath': src_path}, files={'file': file})
+            pass
+            return True
         except Exception as e:
             print('=====>', e)
+            return False
             
             
         

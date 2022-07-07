@@ -376,6 +376,10 @@ class Resource(TimeStampMixin):
         order.save()
         self.save()
 
+    def get_status_logs(self):
+        order = self.set_order()
+        return OrderStatusLog.objects.filter(order=order)        
+
 
 
 class Author(TimeStampMixin):

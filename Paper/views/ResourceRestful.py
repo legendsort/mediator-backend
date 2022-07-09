@@ -60,7 +60,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
     renderer_classes = [JSONResponseRenderer]
     filterset_class = ResourceFilter
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    queryset = Resource.objects.all()
+    queryset = Resource.objects.filter(is_allow=1)
     ordering_fields = {
         'id':'id',
         'title': 'title',
@@ -90,10 +90,12 @@ class ResourceViewSet(viewsets.ModelViewSet):
             base_data = self.get_base_data()
             serializer = Paper.serializers.ResourceSerializer(data=base_data)
             type_id = request.data.get('type_id')
-            if serializer.is_valid():
+            if serializer.is_valid():                
                 serializer.save()
                 user = request.user
                 instance = serializer.instance
+                instance.is_allow = 1
+                instance.save()
                 status = Status.objects.get(name='Requested') 
                 business_type = BusinessType.objects.get(pk=type_id)               
                 order = instance.set_order(user=request.user, status=status, business_type=business_type)
@@ -127,8 +129,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 'data': [],
                 'message': 'Failed create BusinessType instance'
             })
-        except Exception as e:
-            print('----', e)
+        except Exception as e:            
             if instance:
                 instance.delete()            
             return JsonResponse({

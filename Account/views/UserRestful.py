@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes, authentication_classes, action
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
-from Account.serializers import UserListSerializer, RoleSerializer, UserDetailSerializer
+from Account.serializers import UserListSerializer, RoleSerializer, UserDetailSerializer, UserOutSideSerializer
 from Account.models import User, Role, Unit, CustomerProfile
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
@@ -267,6 +267,23 @@ class UserViewSet(ModelViewSet):
             return JsonResponse({
                 'response_code': user.check_password(request.data.get('newPassword')),
                 'data': [],
+                'message': 'Changed'
+            })
+        except django.db.DatabaseError:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Change failed'
+            })
+
+    @action(detail=False, url_path='fetch-transfers', methods=['get'])
+    def fetch_transfers(self, request, pk=None):
+        try:
+            user = self.request.user
+            users = User.objects.filter(role__permissions__codename__in=['manage_paper', 'mediate_paper']).exclude(pk=user.pk)
+            return JsonResponse({
+                'response_code': True,
+                'data': UserOutSideSerializer(users, many=True).data,
                 'message': 'Changed'
             })
         except django.db.DatabaseError:

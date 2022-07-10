@@ -25,7 +25,17 @@ class UserAccessPolicy(AccessPolicy):
             "principal": "*",
             "effect": "allow"
         },
+        {
+            "action": ['fetch_transfers'],
+            "principal": "*",
+            "effect": "allow",
+            'condition': 'can_transfer'
+        }
     ]
+
+    @staticmethod
+    def can_transfer(request, view, action) -> bool:
+        return request.user.has_perms(['manage_paper']) or request.user.is_superuser or request.user.has_perms(['mediate_paper'])
 
     @staticmethod
     def manageable_user(request, view, action) -> bool:

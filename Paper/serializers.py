@@ -2,7 +2,7 @@ from rest_framework import serializers
 from Paper.models import Journal, ReviewType, Country, ProductType, Frequency, Category,\
     Publisher, Article, Submit, Order, Author, Status, Requirement, UploadFile, OrderStatusLog, Resource
 from Contest.serializers import UploadSerializer
-
+from Account.serializers import BusinessSerializer, UserDetailSerializer
 
 class FrequencySerializer(serializers.ModelSerializer):
     class Meta:
@@ -334,27 +334,9 @@ class RequirementSerializer(serializers.ModelSerializer):
             'file_type'
         ]
 
-
-class ResourceSerializer(serializers.ModelSerializer):
+class ResourceUploadSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
-    upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True)
-
-    class Meta:
-        model = Resource
-        fields = [
-            'id',
-            'title',
-            'detail',
-            'created_at',
-            'is_upload',
-            'is_allow',
-            'upload_files'
-        ]        
-
-
-class ResourceDetailSerializer(serializers.ModelSerializer):
-    created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)    
-    type_id = serializers.SerializerMethodField(read_only=True)
+    upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True, required=False)
 
     def get_order(self, obj):
         try:
@@ -363,7 +345,6 @@ class ResourceDetailSerializer(serializers.ModelSerializer):
 
         except Exception as e:
             return None
-
     def get_type_id(self, obj):
         try:
             order = obj.get_order()
@@ -378,7 +359,128 @@ class ResourceDetailSerializer(serializers.ModelSerializer):
             'id',
             'title',
             'detail',
-            'created_at',            
-            'type_id'
-        ] 
+            'created_at',
+            'is_upload',
+            'is_allow',
+            'upload_files'
+        ]        
 
+
+class ResourceSerializer(serializers.ModelSerializer):
+    updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    order_type = serializers.SerializerMethodField(read_only=True)    
+    status = serializers.SerializerMethodField(read_only=True)
+    username = serializers.SerializerMethodField(read_only=True)
+    order_id = serializers.SerializerMethodField(read_only=True) 
+    message = serializers.SerializerMethodField(read_only=True)
+    dealer = serializers.StringRelatedField(read_only=True)
+    status_logs = StatusLogsSerializer(source='get_status_logs', many=True, read_only=True)
+
+    def get_message(self, obj):
+        try:
+            order = obj.set_order()
+            return OrderStatusLog.objects.filter(status=order.status, order=order).first().message
+
+        except Exception as e:            
+            return ''
+
+    def get_order_type(self, obj):
+        try:
+            order = obj.get_order()
+            if order.type:
+                return order.type.name
+            return None
+
+        except Exception as e:
+            return None
+
+    def get_status(self, obj):
+        try:
+            order = obj.get_order()
+            return order.status.name
+
+        except Exception as e:
+            return None  
+
+    def get_username(self, obj):
+        try:
+            order = obj.get_order()
+            return order.user.username
+
+        except Exception as e:
+            return None  
+    def get_order_id(self, obj):
+        try:
+            order = obj.get_order()
+            return order.id
+
+        except Exception as e:
+            return None                                                      
+
+    class Meta:
+        model = Resource
+        fields = [
+            'id',
+            'title',
+            'detail',
+            'updated_at',
+            'order_type',
+            'status',
+            'username',
+            'order_id',
+            'message',
+            'dealer',
+            'status_logs'
+        ]        
+
+
+class ResourceDetailSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)    
+    type_id = serializers.SerializerMethodField(read_only=True)
+    order_id = serializers.SerializerMethodField(read_only=True)   
+    message = serializers.SerializerMethodField(read_only=True)
+    status_logs = StatusLogsSerializer(source='get_status_logs', many=True, read_only=True)
+    def get_message(self, obj):
+        try:
+            order = obj.set_order()
+            return OrderStatusLog.objects.filter(status=order.status, order=order).first().message
+
+        except Exception as e:
+            print(e)
+            return ''
+
+    def get_order(self, obj):
+        try:
+            order = obj.get_order()
+            return OrderSerializer(order).data
+
+        except Exception as e:
+            return None
+    def get_type_id(self, obj):
+        try:
+            order = obj.get_order()
+            return order.type_id
+
+        except Exception as e:
+            return None
+
+    def get_order_id(self, obj):
+        try:
+            order = obj.get_order()
+            return order.id
+
+        except Exception as e:
+            return None              
+            
+    class Meta:
+        model = Resource
+        fields = [
+            'id',
+            'title',
+            'detail',
+            'created_at',            
+            'type_id',
+            'order_id',
+            'message',
+            'status_logs'
+        ] 

@@ -1,15 +1,18 @@
 from Account.services import APIBaseService
 from django.conf import settings
-
+import requests as req
+from rest_framework.response import Response
+from requests_toolbelt.multipart.encoder import MultipartEncoder
+import json
 
 class FTPService(APIBaseService):
 
     def __init__(self, token):
         self.base_url = f"{getattr(settings, 'MEDIATOR_SERVICE_API_BASE_URL', '')}/api/v1/cloud"
         self.headers = {
-            'Content-Type': 'application/json',
             'Accept': '*/*',
-            'Authorization': f"Bearer {token}"
+            'Authorization': f"Bearer {token}",
+            'Content-Type': 'application/json',
         }
         self.token = token
         self.username = None
@@ -62,15 +65,22 @@ class FTPService(APIBaseService):
             'dstPath': dst_path,
         })
 
-    def upload(self, src_path, dst_path):
-        url = f"{self.base_url}/copy"
-        return self.call(url=url, data={
-            'username': self.username,
-            'password': self.password,
-            'host': self.host,
-            'srcPath': src_path,
-            'dstPath': dst_path,
-        })
+    def upload(self, request):
+        url = f"{self.base_url}/upload"
+        try:
+            src_path = request.data.get('src_path')
+            files = request.data.getlist('files')
+            print(files)
+            for file in files:
+                req.post(f"{url}", headers={'Authorization': f"Bearer {self.token}"}, data={'srcPath': src_path}, files={'file': file})
+            pass
+            return True
+        except Exception as e:
+            print('=====>', e)
+            return False
+            
+            
+        
 
     def download(self, src_path, dst_path):
         url = f"{self.base_url}/download"

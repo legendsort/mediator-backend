@@ -94,6 +94,7 @@ class ResourceViewSet1(viewsets.ModelViewSet):
                 instance = serializer.instance
                 status = Status.objects.get(name='Requested')
                 business_type = BusinessType.objects.get(codename=codename)
+                instance.flag = 1
                 order = instance.set_order(user=request.user, status=status, business_type=business_type)
             else:
                 print(serializer.errors)
@@ -235,6 +236,7 @@ class ResourceViewSet1(viewsets.ModelViewSet):
                 instance = serializer.instance
                 instance.user = request.user
                 instance.set_upload_files(upload_files)
+                instance.flag = 1
                 instance.save()
                 type = apps.get_model('Account.BusinessType').objects.get(codename=codename)
                 status = Status.objects.get(name='New upload resource' if codename != 'contest' else 'Accepted')

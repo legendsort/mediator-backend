@@ -59,7 +59,7 @@ class ResourceViewSet1(viewsets.ModelViewSet):
     renderer_classes = [JSONResponseRenderer]
     filterset_class = ResourceFilter
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    queryset = Resource.objects.all()
+    queryset = Resource.objects.filter(flag=True)
     ordering_fields = {
         'title': 'title',
         'id':'id',
@@ -324,7 +324,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
     renderer_classes = [JSONResponseRenderer]
     filterset_class = ResourceFilter
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    queryset = Resource.objects.filter(is_allow=1)
+    queryset = Resource.objects.filter(is_allow=1, flag=0)
     ordering_fields = {
         'id':'id',
         'title': 'title',
@@ -453,118 +453,6 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 'message': 'Can not remove this  instance'
             })
             
-    # fetch resource
-    @action(detail=False, methods=['get'], url_path='fetch')
-    def fetch(self, request):
-        try:
-            serializer = ResourceDetailSerializer(self.queryset, many=True)
-            queryset = self.filter_queryset(self.get_queryset())
-            page = self.paginate_queryset(queryset)
-            if page is not None:
-                serializer = self.get_serializer(page, many=True)
-                return self.get_paginated_response(serializer.data)
-
-            serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
-
-        except Exception as e:
-            print(e)
-            return JsonResponse({
-                'response_code': False,
-                'data': [],
-                'message': "Server has error"
-            })
-
-
-    # fetch resource
-    @action(detail=True, methods=['get'], url_path='fetch-detail')
-    def fetchDetail(self, request, pk=None):
-        try:
-            instance = self.get_object()
-            serializer = self.get_serializer(instance)
-            return JsonResponse({
-                'response_code': True,
-                'data': serializer.data,
-                'message': "Fetch succeed"
-            })
-
-        except Exception as e:
-            print(e)
-            return JsonResponse({
-                'response_code': False,
-                'data': [],
-                'message': "Server has error"
-            })
-
-    # upload resource create
-    @action(detail=False, methods=['post'], url_path='create-upload')
-    def createUpload(self, request):
-        instance = None
-        try:
-            base_data = self.get_base_data()
-            print(request.data)
-            
-            serializer = ResourceUploadSerializer(data=base_data)
-            if serializer.is_valid():
-                upload_files = request.data.getlist('files')
-                codename = request.data.get('codename')
-                # if not upload_files: 
-                #     raise ValidationError('upload_files')
-                
-                serializer.save()
-                instance = serializer.instance
-                instance.user = request.user
-                instance.set_upload_files(upload_files)
-                instance.save()
-                type = apps.get_model('Account.BusinessType').objects.get(codename=codename)
-                status = Status.objects.get(name='New upload resource' if codename != 'contest' else 'Accepted')
-                instance.set_order(request.user, status, type)
-                pass
-            else:
-                print(serializer.errors)
-                return JsonResponse({
-                    'response_code': False,
-                    'data': serializer.errors,
-                    'message': 'Duplicated name'
-                })
-            return JsonResponse({
-                'response_code': True,
-                'data': serializer.data,
-                'message': 'Successfully upload resource created!'
-            })
-        except Status.DoesNotExist:
-            if instance:
-                instance.delete()
-            pass
-        except BusinessType.DoesNotExist:
-            if instance:
-                instance.delete()
-            pass
-        except Exception as e:
-            print('----', e)
-            if instance:
-                instance.delete()            
-            return JsonResponse({
-                'response_code': False,
-                'data': [],
-                'message': 'Failed to create upload Resource'
-            })
-
-    def destroy(self, request, *args, **kwargs):
-        try:
-            self.perform_destroy(self.get_object())
-            return JsonResponse({
-                'response_code': True,
-                'data': [],
-                'message': 'Successfully removed!'
-            })
-        except django.db.DatabaseError:
-            return JsonResponse({
-                'response_code': False,
-                'data': [],
-                'message': 'Can not remove this  instance'
-            })  
-
     # accept request
     @action(detail=True, methods=['post'], url_path='accept')
     def accept(self, request, pk=None):

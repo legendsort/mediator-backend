@@ -335,9 +335,10 @@ class RequirementSerializer(serializers.ModelSerializer):
         ]
 
 class ResourceUploadSerializer(serializers.ModelSerializer):
-    created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True, required=False)
-
+    order_id = serializers.SerializerMethodField(read_only=True) 
+    
     def get_order(self, obj):
         try:
             order = obj.get_order()
@@ -345,6 +346,14 @@ class ResourceUploadSerializer(serializers.ModelSerializer):
 
         except Exception as e:
             return None
+    
+    def get_order_id(self, obj):
+        try:
+            order = obj.get_order()
+            return order.id
+
+        except Exception as e:
+            return None    
     def get_type_id(self, obj):
         try:
             order = obj.get_order()
@@ -362,7 +371,9 @@ class ResourceUploadSerializer(serializers.ModelSerializer):
             'created_at',
             'is_upload',
             'is_allow',
-            'upload_files'
+            'upload_files',
+            'order_id',
+            'flag'
         ]        
 
 
@@ -437,12 +448,12 @@ class ResourceSerializer(serializers.ModelSerializer):
 
 
 class ResourceDetailSerializer(serializers.ModelSerializer):
-    created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)    
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)    
     type = serializers.SerializerMethodField(read_only=True)
     upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True)
     user = serializers.SerializerMethodField(read_only=True)
     status = serializers.SerializerMethodField(read_only=True)
-
+    order_id = serializers.SerializerMethodField(read_only=True) 
     def get_order(self, obj):
         try:
             order = obj.get_order()
@@ -451,7 +462,13 @@ class ResourceDetailSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(e)
             return None
+    def get_order_id(self, obj):
+        try:
+            order = obj.get_order()
+            return order.id
 
+        except Exception as e:
+            return None    
     def get_type(self, obj):
         try:
             order = obj.get_order()           
@@ -489,6 +506,8 @@ class ResourceDetailSerializer(serializers.ModelSerializer):
             'type',
             'user',
             'status',
-            'upload_files'
+            'upload_files',
+            'order_id',
+            'flag'
         ] 
 

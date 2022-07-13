@@ -335,9 +335,10 @@ class RequirementSerializer(serializers.ModelSerializer):
         ]
 
 class ResourceUploadSerializer(serializers.ModelSerializer):
-    created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True, required=False)
-
+    order_id = serializers.SerializerMethodField(read_only=True) 
+    
     def get_order(self, obj):
         try:
             order = obj.get_order()
@@ -345,6 +346,14 @@ class ResourceUploadSerializer(serializers.ModelSerializer):
 
         except Exception as e:
             return None
+    
+    def get_order_id(self, obj):
+        try:
+            order = obj.get_order()
+            return order.id
+
+        except Exception as e:
+            return None    
     def get_type_id(self, obj):
         try:
             order = obj.get_order()
@@ -362,8 +371,11 @@ class ResourceUploadSerializer(serializers.ModelSerializer):
             'created_at',
             'is_upload',
             'is_allow',
-            'upload_files'
+            'upload_files',
+            'order_id',
+            'flag'
         ]        
+
 
 
 class ResourceSerializer(serializers.ModelSerializer):
@@ -434,44 +446,56 @@ class ResourceSerializer(serializers.ModelSerializer):
         ]        
 
 
+
 class ResourceDetailSerializer(serializers.ModelSerializer):
-    created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)    
-    type_id = serializers.SerializerMethodField(read_only=True)
-    order_id = serializers.SerializerMethodField(read_only=True)   
-    message = serializers.SerializerMethodField(read_only=True)
-    status_logs = StatusLogsSerializer(source='get_status_logs', many=True, read_only=True)
-    def get_message(self, obj):
-        try:
-            order = obj.set_order()
-            return OrderStatusLog.objects.filter(status=order.status, order=order).first().message
-
-        except Exception as e:
-            print(e)
-            return ''
-
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)    
+    type = serializers.SerializerMethodField(read_only=True)
+    upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True)
+    user = serializers.SerializerMethodField(read_only=True)
+    status = serializers.SerializerMethodField(read_only=True)
+    order_id = serializers.SerializerMethodField(read_only=True) 
     def get_order(self, obj):
         try:
             order = obj.get_order()
             return OrderSerializer(order).data
 
         except Exception as e:
+            print(e)
             return None
-    def get_type_id(self, obj):
-        try:
-            order = obj.get_order()
-            return order.type_id
-
-        except Exception as e:
-            return None
-
     def get_order_id(self, obj):
         try:
             order = obj.get_order()
             return order.id
 
         except Exception as e:
-            return None              
-            
+            return None    
+    def get_type(self, obj):
+        try:
+            order = obj.get_order()           
+            return BusinessSerializer(order.type).data.get('name')
+
+        except Exception as e:
+            print(e)
+            return None
+    def get_user(self, obj):
+        try:
+            order = obj.get_order()           
+            return UserDetailSerializer(order.user).data.get('username')
+
+        except Exception as e:
+            print(e)
+            return None
+
+    def get_status(self, obj):
+        try:
+            order = obj.get_order()           
+            return StatusSerializer(order.status).data.get('name')
+
+        except Exception as e:
+            print(e)
+            return None
+
+
     class Meta:
         model = Resource
         fields = [
@@ -479,8 +503,11 @@ class ResourceDetailSerializer(serializers.ModelSerializer):
             'title',
             'detail',
             'created_at',            
-            'type_id',
+            'type',
+            'user',
+            'status',
+            'upload_files',
             'order_id',
-            'message',
-            'status_logs'
+            'flag'
         ] 
+

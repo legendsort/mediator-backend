@@ -341,8 +341,6 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 serializer.save()
                 user = request.user
                 instance = serializer.instance
-                instance.is_allow = 1
-                instance.save()
                 status = Status.objects.get(name='Requested') 
                 business_type = BusinessType.objects.get(pk=type_id)               
                 order = instance.set_order(user=request.user, status=status, business_type=business_type)
@@ -466,7 +464,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
 
     # accept request
     @action(detail=True, methods=['post'], url_path='pubcheck')
-    def pub_check(self, request, pk=None):
+    def pubcheck(self, request, pk=None):
         instance = self.get_object()
         try:
             user = request.user
@@ -493,7 +491,6 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 'message': "Server has error"
             })            
 
-    # accept request
 
     # reject request
     @action(detail=True, methods=['post'], url_path='reject')

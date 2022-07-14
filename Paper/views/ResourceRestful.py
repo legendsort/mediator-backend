@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets, status
 import Paper.serializers
 from Paper.models import Journal, Publisher, Country, ReviewType, Category, ProductType, Frequency, Article, Status, Resource
-from Paper.serializers import JournalSerializer, PublisherSerializer, ResourceUploadSerializer, ResourceSerializer, ResourceDetailSerializer,PublisherSimpleSerializer, JournalSimpleSerializer
+from Paper.serializers import JournalSerializer, PublisherSerializer, ResourceUploadSerializer, ResourceSerializer, ResourceDetailSerializer, ResourceUploadDetailSerializer, PublisherSimpleSerializer, JournalSimpleSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
 from Paper.helper import StandardResultsSetPagination
@@ -80,7 +80,7 @@ class ResourceViewSet1(viewsets.ModelViewSet):
             print("----serialize upload----")
             return ResourceUploadSerializer
         elif self.action == 'fetch' or self.action == 'fetchDetail':
-            return ResourceDetailSerializer
+            return ResourceUploadDetailSerializer
         return ResourceUploadSerializer
     
     def create(self, request, *args, **kwargs):
@@ -178,7 +178,7 @@ class ResourceViewSet1(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='fetch')
     def fetch(self, request):
         try:
-            serializer = ResourceDetailSerializer(self.queryset, many=True)
+            serializer = ResourceUploadDetailSerializer(self.queryset, many=True)
             queryset = self.filter_queryset(self.get_queryset())
             page = self.paginate_queryset(queryset)
             if page is not None:
@@ -326,7 +326,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
     renderer_classes = [JSONResponseRenderer]
     filterset_class = ResourceFilter
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    queryset = Resource.objects.filter(is_allow=1, flag=0)
+    queryset = Resource.objects.filter(flag=0)
     ordering_fields = {
         'id':'id',
         'title': 'title',

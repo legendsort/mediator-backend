@@ -345,8 +345,7 @@ class Resource(TimeStampMixin):
                 m_file.resource = self
                 m_file.save()
                 index += 1
-            except Exception as e:
-                print('----', e)
+            except Exception as e:                
                 return False
         return True
 
@@ -381,7 +380,7 @@ class Resource(TimeStampMixin):
 
     def get_status_logs(self):
         order = self.set_order()
-        return OrderStatusLog.objects.filter(order=order)        
+        return OrderStatusLog.objects.filter(order=order).order_by('-created_at')        
 
 
 class Author(TimeStampMixin):

@@ -170,7 +170,6 @@ class JournalViewSet(viewsets.ModelViewSet):
 
 
 # publisher API
-
 class PublisherFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
     name_translate = django_filters.CharFilter(field_name='name_translate', lookup_expr='icontains')
@@ -445,6 +444,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
 # Status API
 class StatusFilter(django_filters.FilterSet):
     name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
+    type = django_filters.CharFilter(field_name='type', lookup_expr='exact')
 
     class Meta:
         model = Paper.models.Status

@@ -322,6 +322,8 @@ class StatusSerializer(serializers.ModelSerializer):
             'id',
             'name',
             'description',
+            'codename',
+            'type'
         ]
 
 

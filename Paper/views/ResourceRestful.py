@@ -307,13 +307,13 @@ class ResourceViewSet(viewsets.ModelViewSet):
     renderer_classes = [JSONResponseRenderer]
     filterset_class = ResourceFilter
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    queryset = Resource.objects.filter(flag=0)
+    queryset = Resource.objects.filter(flag=False)
     ordering_fields = {
-        'id':'id',
+        'id': 'id',
         'title': 'title',
         'updated_at': 'updated_at',
-        'order':'order',
-        'dealer':'dealer'
+        'order': 'order',
+        'dealer': 'dealer'
     }
     ordering = ['-updated_at']
 
@@ -347,7 +347,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 business_type = BusinessType.objects.get(pk=type_id)               
                 order = instance.set_order(user=request.user, status=status, business_type=business_type)
                 instance.update_status(Status.objects.get(name='Requested'),
-                                   message=f"RequestStatus has been started by {user.username}")                
+                                       message=f"RequestStatus has been started by {user.username}")
             else:
                 print(serializer.errors)
                 return JsonResponse({

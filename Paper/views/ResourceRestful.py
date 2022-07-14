@@ -1,19 +1,16 @@
 import django.db.utils
 from django.http import JsonResponse
 from rest_framework.decorators import action
-
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 import Paper.serializers
-from Paper.models import Journal, Publisher, Country, ReviewType, Category, ProductType, Frequency, Article, Status, Resource
-from Paper.serializers import JournalSerializer, PublisherSerializer, ResourceUploadSerializer, ResourceSerializer, ResourceDetailSerializer, ResourceUploadDetailSerializer, PublisherSimpleSerializer, JournalSimpleSerializer
+from Paper.models import Journal, Status, Resource
+from Paper.serializers import ResourceUploadSerializer, ResourceSerializer, ResourceDetailSerializer, ResourceUploadDetailSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
 from Paper.helper import StandardResultsSetPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework_tricks import filters
-from Paper.policies import PublisherAccessPolicy
 from Paper.helper import filter_params
 from Account.models import BusinessType
 from rest_framework_tricks.filters import OrderingFilter
@@ -52,7 +49,8 @@ class ResourceFilter(django_filters.FilterSet):
     def search_by_dealer(queryset, name, value): 
         return queryset.filter(dealer__username=value)                      
 
-class ResourceViewSet1(viewsets.ModelViewSet):
+
+class ResourceUploadViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, ]
     serializer_class = Paper.serializers.ResourceUploadSerializer
     pagination_class = StandardResultsSetPagination
@@ -62,12 +60,11 @@ class ResourceViewSet1(viewsets.ModelViewSet):
     queryset = Resource.objects.filter(flag=True)
     ordering_fields = {
         'title': 'title',
-        'id':'id',
+        'id': 'id',
         'created_at': 'created_at'
     }
-    ordering = ['created_at','title','id']
-   
-   
+    ordering = ['created_at', 'title', 'id']
+
     def get_base_data(self):
         return filter_params(self.request.data, [
             'title',
@@ -158,7 +155,6 @@ class ResourceViewSet1(viewsets.ModelViewSet):
                 'message': 'server has error'
             })
 
-    
     def destroy(self, request, *args, **kwargs):
         try:
             self.perform_destroy(self.get_object())
@@ -186,8 +182,11 @@ class ResourceViewSet1(viewsets.ModelViewSet):
                 return self.get_paginated_response(serializer.data)
 
             serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
-
+            return JsonResponse({
+                'response_code': True,
+                'data': serializer.data,
+                'message': 'Successfully normal resource created!'
+            })
         except Exception as e:
             print(e)
             return JsonResponse({
@@ -196,10 +195,9 @@ class ResourceViewSet1(viewsets.ModelViewSet):
                 'message': "Server has error"
             })
 
-
     # fetch resource
     @action(detail=True, methods=['get'], url_path='fetch-detail')
-    def fetchDetail(self, request, pk=None):
+    def fetch_detail(self, request, pk=None):
         try:
             instance = self.get_object()
             serializer = self.get_serializer(instance)
@@ -219,7 +217,7 @@ class ResourceViewSet1(viewsets.ModelViewSet):
 
     # upload resource create
     @action(detail=False, methods=['post'], url_path='create-upload')
-    def createUpload(self, request):
+    def create_upload(self, request):
         instance = None
         try:
             base_data = self.get_base_data()
@@ -272,21 +270,6 @@ class ResourceViewSet1(viewsets.ModelViewSet):
                 'message': 'Failed to create upload Resource'
             })
 
-    def destroy(self, request, *args, **kwargs):
-        try:
-            self.perform_destroy(self.get_object())
-            return JsonResponse({
-                'response_code': True,
-                'data': [],
-                'message': 'Successfully removed!'
-            })
-        except django.db.DatabaseError:
-            return JsonResponse({
-                'response_code': False,
-                'data': [],
-                'message': 'Can not remove this  instance'
-            })
-
     # update resource status
     @action(detail=True, methods=['post'], url_path='update-status')
     def update_status(self, request, pk=None):
@@ -316,8 +299,6 @@ class ResourceViewSet1(viewsets.ModelViewSet):
                 'message': "Server has error"
             })
             
-    
-
 
 class ResourceViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, ]
@@ -439,7 +420,6 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 'message': 'server has error'
             })
 
-    
     def destroy(self, request, *args, **kwargs):
         try:
             self.perform_destroy(self.get_object())
@@ -486,7 +466,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
 
     # accept request
     @action(detail=True, methods=['post'], url_path='pubcheck')
-    def pubcheck(self, request, pk=None):
+    def pub_check(self, request, pk=None):
         instance = self.get_object()
         try:
             user = request.user
@@ -514,6 +494,8 @@ class ResourceViewSet(viewsets.ModelViewSet):
             })            
 
     # accept request
+
+    # reject request
     @action(detail=True, methods=['post'], url_path='reject')
     def reject(self, request, pk=None):
         instance = self.get_object()

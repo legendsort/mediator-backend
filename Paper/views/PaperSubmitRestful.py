@@ -1,7 +1,6 @@
 import json
 from rest_framework.decorators import action
 import django.db.utils
-import rest_framework.exceptions
 from django.db.models import Q
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse

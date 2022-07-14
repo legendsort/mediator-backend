@@ -7,6 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from Paper.helper import publisher_logo_path, journal_resource_path, submit_upload_path, censor_file_path
 from django.apps import apps
 
+
 class TimeStampMixin(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -340,12 +341,9 @@ class Resource(TimeStampMixin):
                 m_file.resource = self
                 m_file.save()
                 index += 1
-
             except Exception as e:
-              print('----', e)
-
-   
-
+                print('----', e)
+                return False
         return True
 
     def get_order(self):
@@ -382,9 +380,7 @@ class Resource(TimeStampMixin):
         return OrderStatusLog.objects.filter(order=order)        
 
 
-
 class Author(TimeStampMixin):
-
     class Appellation(models.TextChoices):
         DOCTOR = 'Dr', _('Doctor')
         MR = 'Mr', _('Mr')

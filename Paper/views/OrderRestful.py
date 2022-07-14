@@ -46,7 +46,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         else:
             return orders.filter(pk=None)
 
-
     def create(self, request, *args, **kwargs):
         try:
             return JsonResponse({

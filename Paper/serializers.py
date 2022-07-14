@@ -4,7 +4,9 @@ from Paper.models import Journal, ReviewType, Country, ProductType, Frequency, C
 from Contest.serializers import UploadSerializer
 from Account.serializers import BusinessSerializer, UserDetailSerializer
 
+
 class FrequencySerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Frequency
         fields = [
@@ -334,12 +336,14 @@ class RequirementSerializer(serializers.ModelSerializer):
             'file_type'
         ]
 
+
 class ResourceUploadSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True, required=False)
     order_id = serializers.SerializerMethodField(read_only=True) 
     
-    def get_order(self, obj):
+    @staticmethod
+    def get_order(obj):
         try:
             order = obj.get_order()
             return OrderSerializer(order).data
@@ -347,14 +351,17 @@ class ResourceUploadSerializer(serializers.ModelSerializer):
         except Exception as e:
             return None
     
-    def get_order_id(self, obj):
+    @staticmethod
+    def get_order_id(obj):
         try:
             order = obj.get_order()
             return order.id
 
         except Exception as e:
-            return None    
-    def get_type_id(self, obj):
+            return None
+
+    @staticmethod
+    def get_type_id(obj):
         try:
             order = obj.get_order()
             return order.type_id
@@ -377,7 +384,6 @@ class ResourceUploadSerializer(serializers.ModelSerializer):
         ]        
 
 
-
 class ResourceSerializer(serializers.ModelSerializer):
     updated_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     order_type = serializers.SerializerMethodField(read_only=True)    
@@ -388,7 +394,8 @@ class ResourceSerializer(serializers.ModelSerializer):
     dealer = serializers.StringRelatedField(read_only=True)
     status_logs = StatusLogsSerializer(source='get_status_logs', many=True, read_only=True)
 
-    def get_message(self, obj):
+    @staticmethod
+    def get_message(obj):
         try:
             order = obj.set_order()
             return OrderStatusLog.objects.filter(status=order.status, order=order).first().message
@@ -396,7 +403,8 @@ class ResourceSerializer(serializers.ModelSerializer):
         except Exception as e:            
             return ''
 
-    def get_order_type(self, obj):
+    @staticmethod
+    def get_order_type(obj):
         try:
             order = obj.get_order()
             if order.type:
@@ -406,7 +414,8 @@ class ResourceSerializer(serializers.ModelSerializer):
         except Exception as e:
             return None
 
-    def get_status(self, obj):
+    @staticmethod
+    def get_status(obj):
         try:
             order = obj.get_order()
             return order.status.name
@@ -414,14 +423,17 @@ class ResourceSerializer(serializers.ModelSerializer):
         except Exception as e:
             return None  
 
-    def get_username(self, obj):
+    @staticmethod
+    def get_username(obj):
         try:
             order = obj.get_order()
             return order.user.username
 
         except Exception as e:
             return None  
-    def get_order_id(self, obj):
+
+    @staticmethod
+    def get_order_id(obj):
         try:
             order = obj.get_order()
             return order.id
@@ -446,15 +458,16 @@ class ResourceSerializer(serializers.ModelSerializer):
         ]        
 
 
-
 class ResourceUploadDetailSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)    
     type = serializers.SerializerMethodField(read_only=True)
     upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True)
     user = serializers.SerializerMethodField(read_only=True)
     status = serializers.SerializerMethodField(read_only=True)
-    order_id = serializers.SerializerMethodField(read_only=True) 
-    def get_order(self, obj):
+    order_id = serializers.SerializerMethodField(read_only=True)
+
+    @staticmethod
+    def get_order(obj):
         try:
             order = obj.get_order()
             return OrderSerializer(order).data
@@ -462,14 +475,18 @@ class ResourceUploadDetailSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(e)
             return None
-    def get_order_id(self, obj):
+
+    @staticmethod
+    def get_order_id(obj):
         try:
             order = obj.get_order()
             return order.id
 
         except Exception as e:
             return None    
-    def get_type(self, obj):
+
+    @staticmethod
+    def get_type(obj):
         try:
             order = obj.get_order()           
             return BusinessSerializer(order.type).data.get('name')
@@ -477,7 +494,9 @@ class ResourceUploadDetailSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(e)
             return None
-    def get_user(self, obj):
+
+    @staticmethod
+    def get_user(obj):
         try:
             order = obj.get_order()           
             return UserDetailSerializer(order.user).data.get('username')
@@ -486,7 +505,8 @@ class ResourceUploadDetailSerializer(serializers.ModelSerializer):
             print(e)
             return None
 
-    def get_status(self, obj):
+    @staticmethod
+    def get_status(obj):
         try:
             order = obj.get_order()           
             return StatusSerializer(order.status).data.get('name')
@@ -494,7 +514,6 @@ class ResourceUploadDetailSerializer(serializers.ModelSerializer):
         except Exception as e:
             print(e)
             return None
-
 
     class Meta:
         model = Resource
@@ -518,6 +537,7 @@ class ResourceDetailSerializer(serializers.ModelSerializer):
     order_id = serializers.SerializerMethodField(read_only=True)   
     message = serializers.SerializerMethodField(read_only=True)
     status_logs = StatusLogsSerializer(source='get_status_logs', many=True, read_only=True)
+
     def get_message(self, obj):
         try:
             order = obj.set_order()
@@ -534,6 +554,7 @@ class ResourceDetailSerializer(serializers.ModelSerializer):
 
         except Exception as e:
             return None
+
     def get_type_id(self, obj):
         try:
             order = obj.get_order()

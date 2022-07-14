@@ -11,7 +11,7 @@ from Paper.render import JSONResponseRenderer
 from Paper.helper import StandardResultsSetPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework_tricks import filters
-from Paper.policies import PublisherAccessPolicy
+from Paper.policies import PublisherAccessPolicy, JournalAccessPolicy
 from Paper.helper import filter_params
 from Account.models import BusinessType
 from rest_framework_tricks.filters import OrderingFilter
@@ -32,7 +32,7 @@ class JournalFilter(django_filters.FilterSet):
 
 
 class JournalViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, JournalAccessPolicy]
     serializer_class = JournalSerializer
     pagination_class = StandardResultsSetPagination
     filterset_class = JournalFilter

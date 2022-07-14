@@ -17,6 +17,28 @@ class PublisherAccessPolicy(AccessPolicy):
         return user.has_perm('view_contest') or user.has_perm('manage_contest')
 
 
+class JournalAccessPolicy(AccessPolicy):
+    statements = [
+        {
+            "action": ["destroy", "update", "partial_update", "create"],
+            "principal": "*",
+            "condition": "has_permissions:manage_paper",
+            "effect": "allow"
+        },
+        {
+            "action": ["list", "retrieve"],
+            "principal": "*",
+            "effect": "allow"
+        },
+    ]
+
+    @staticmethod
+    def has_permissions(request, view, actions, params=None) -> bool:
+        user = request.user
+        print(params)
+        return user.has_perm(params)
+
+
 class SubmissionAccessPolicy(AccessPolicy):
     statements = [
         {

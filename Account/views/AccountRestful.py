@@ -9,7 +9,7 @@ import django_filters
 from Paper.render import JSONResponseRenderer
 from Paper.helper import StandardResultsSetPagination
 from django_filters.rest_framework import DjangoFilterBackend
-from Account.policies import PermissionAccessPolicy
+from Account.policies import PermissionAccessPolicy, UnitAccessPolicy
 from rest_framework_tricks import filters
 from django.db.models import Q
 from rest_framework.decorators import api_view, permission_classes, authentication_classes, action
@@ -66,7 +66,7 @@ class UnitFilter(django_filters.FilterSet):
 
 
 class UnitViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, UnitAccessPolicy]
     serializer_class = Account.serializers.UnitSerializer
     pagination_class = StandardResultsSetPagination
     renderer_classes = [JSONResponseRenderer, ]

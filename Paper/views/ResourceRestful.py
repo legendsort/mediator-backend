@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets, status
 import Paper.serializers
 from Paper.models import Journal, Publisher, Country, ReviewType, Category, ProductType, Frequency, Article, Status, Resource
-from Paper.serializers import JournalSerializer, PublisherSerializer, ResourceUploadSerializer, ResourceSerializer, ResourceDetailSerializer,PublisherSimpleSerializer, JournalSimpleSerializer
+from Paper.serializers import PublisherSerializer, ResourceUploadSerializer, ResourceSerializer, ResourceDetailSerializer, PublisherSimpleSerializer, JournalSimpleSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
 from Paper.helper import StandardResultsSetPagination
@@ -173,7 +173,6 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 'message': 'server has error'
             })
 
-    
     def destroy(self, request, *args, **kwargs):
         try:
             self.perform_destroy(self.get_object())
@@ -202,7 +201,6 @@ class ResourceViewSet(viewsets.ModelViewSet):
 
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
-
         except Exception as e:
             print(e)
             return JsonResponse({
@@ -210,7 +208,6 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 'data': [],
                 'message': "Server has error"
             })
-
 
     # fetch resource
     @action(detail=True, methods=['get'], url_path='fetch-detail')
@@ -360,6 +357,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
             })            
 
     # accept request
+
     @action(detail=True, methods=['post'], url_path='reject')
     def reject(self, request, pk=None):
         instance = self.get_object()

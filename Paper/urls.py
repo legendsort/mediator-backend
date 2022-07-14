@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework import routers, serializers, viewsets
 from Paper.views.OrderRestful import OrderViewSet
-from Paper.views.ResourceRestful import ResourceViewSet
+from Paper.views.ResourceRestful import ResourceViewSet, ResourceViewSet1
 from Paper.views.PaperSubmitRestful import SubmitViewSet
 from Contest.views import UploadViewSet
 from Paper.views.PaperRestful import JournalViewSet, PublisherViewSet, CountryViewSet, CategoryViewSet, \
@@ -20,6 +20,7 @@ router.register(r'submit', SubmitViewSet, basename='submit')
 router.register(r'status', StatusViewSet, basename='status')
 router.register(r'requirement', RequirementViewSet, basename='requirement')
 router.register(r'resource', ResourceViewSet, basename='resource')
+router.register(r'resource1', ResourceViewSet1, basename='resource1')
 router.register(r'upload', UploadViewSet, basename='upload')
 router.register(r'order', OrderViewSet, basename='order')
 

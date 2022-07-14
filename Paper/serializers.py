@@ -447,7 +447,7 @@ class ResourceSerializer(serializers.ModelSerializer):
 
 
 
-class ResourceDetailSerializer(serializers.ModelSerializer):
+class ResourceUploadDetailSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)    
     type = serializers.SerializerMethodField(read_only=True)
     upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True)
@@ -511,3 +511,54 @@ class ResourceDetailSerializer(serializers.ModelSerializer):
             'flag'
         ] 
 
+
+class ResourceDetailSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)    
+    type_id = serializers.SerializerMethodField(read_only=True)
+    order_id = serializers.SerializerMethodField(read_only=True)   
+    message = serializers.SerializerMethodField(read_only=True)
+    status_logs = StatusLogsSerializer(source='get_status_logs', many=True, read_only=True)
+    def get_message(self, obj):
+        try:
+            order = obj.set_order()
+            return OrderStatusLog.objects.filter(status=order.status, order=order).first().message
+
+        except Exception as e:
+            print(e)
+            return ''
+
+    def get_order(self, obj):
+        try:
+            order = obj.get_order()
+            return OrderSerializer(order).data
+
+        except Exception as e:
+            return None
+    def get_type_id(self, obj):
+        try:
+            order = obj.get_order()
+            return order.type_id
+
+        except Exception as e:
+            return None
+
+    def get_order_id(self, obj):
+        try:
+            order = obj.get_order()
+            return order.id
+
+        except Exception as e:
+            return None              
+            
+    class Meta:
+        model = Resource
+        fields = [
+            'id',
+            'title',
+            'detail',
+            'created_at',            
+            'type_id',
+            'order_id',
+            'message',
+            'status_logs'
+        ] 

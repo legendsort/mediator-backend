@@ -9,6 +9,7 @@ from rest_framework import status
 
 from django.apps import apps
 
+
 class FTPViewSet(viewsets.ViewSet):
     """
     View to list all users in the system.

@@ -45,9 +45,11 @@ class UserViewSet(ModelViewSet):
     ordering = ['created_at']
 
     def get_queryset(self):
-        if (self.action == 'update' or self.action == 'partial_update' or self.action == 'update_profile') \
-                and self.request.user.is_superuser:
-            return User.objects.exclude(Q(is_remove=True))
+        if self.action == 'update' or self.action == 'partial_update' or self.action == 'update_profile':
+            if self.request.user.is_superuser:
+                return User.objects.exclude(Q(is_remove=True))
+            else:
+                return User.objects.filter(pk=self.request.user.pk)
         if self.request.user.is_superuser:
             return User.objects.exclude(Q(is_remove=True) | Q(is_superuser=True))
 

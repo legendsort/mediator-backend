@@ -77,6 +77,7 @@ class SubmissionService:
             print('create folder error', e)
 
     def zip_data(self):
+        print('----', self.zip_file_path)
         with zipfile.ZipFile(self.zip_file_path, 'w') as zipObj:
             zipObj.write(self.document_path, basename(self.document_name))
             for file in self.submit.get_upload_files():

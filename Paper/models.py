@@ -159,7 +159,8 @@ class Status(models.Model):
     class StatusType(models.TextChoices):
         SUBMISSION = 'submission', _('Submission')
         REQUEST = 'request', _('Request')
-    type = models.CharField(max_length=12, choices=StatusType.choices, default=StatusType.SUBMISSION, )
+        RESOURCE_UPLOAD = 'resource upload', _('Resource Upload')
+    type = models.CharField(max_length=64, choices=StatusType.choices, default=StatusType.SUBMISSION, )
     name = models.CharField(max_length=255, unique=True)
     codename = models.CharField(max_length=255, null=True)
     description = models.TextField(null=True)

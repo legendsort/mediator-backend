@@ -376,7 +376,7 @@ class Resource(TimeStampMixin):
 
     def get_status_logs(self):
         order = self.set_order()
-        return OrderStatusLog.objects.filter(order=order)        
+        return OrderStatusLog.objects.filter(order=order).order_by('-created_at')        
 
 
 class Author(TimeStampMixin):

@@ -73,10 +73,10 @@ class ResourceUploadViewSet(viewsets.ModelViewSet):
         ])
 
     def get_serializer_class(self):
-        if self.action == 'createUpload':
+        if self.action == 'create_upload':
             print("----serialize upload----")
             return ResourceUploadSerializer
-        elif self.action == 'fetch' or self.action == 'fetchDetail':
+        elif self.action == 'fetch' or self.action == 'fetch_detail':
             return ResourceUploadDetailSerializer
         return ResourceUploadSerializer
     

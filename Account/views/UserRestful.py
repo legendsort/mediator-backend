@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes, authentication_classes, action
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
-from Account.serializers import UserListSerializer, RoleSerializer, UserDetailSerializer, UserOutSideSerializer
+from Account.serializers import UserListSerializer, RoleSerializer, UserDetailSerializer, UserOutSideSerializer, UserManageUnitSerializer
 from Account.models import User, Role, Unit, CustomerProfile
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
@@ -51,15 +51,20 @@ class UserViewSet(ModelViewSet):
             else:
                 return User.objects.filter(pk=self.request.user.pk)
         if self.request.user.is_superuser:
-            return User.objects.exclude(Q(is_remove=True) | Q(is_superuser=True))
+            return User.objects.exclude(Q(is_remove=True) | Q(is_superuser=True)).distinct()
+        elif self.request.user.has_perm('manage_unit'):
+            return User.objects.exclude(pk=self.request.user.pk).filter(unit=self.request.user.unit)
 
         return User.objects.filter(pk=None)
 
     def get_serializer_class(self):
+        auth_user = self.request.user
         if self.action == 'get_self_info' or self.action == 'retrieve':
             return UserDetailSerializer
         elif self.action == 'update' or self.action == 'partial_update' or self.action == 'create':
             return UserDetailSerializer
+        if (self.action == 'list' or self.action == 'retrieve' ) and not auth_user.is_superuser and auth_user.has_perm('manage_unit'):
+            return UserManageUnitSerializer
         return UserListSerializer
 
     def create(self, request,  *args, **kwargs):

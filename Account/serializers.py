@@ -134,8 +134,6 @@ class UserDetailSerializer(serializers.ModelSerializer):
             'id',
             'username',
             'role',
-            'username',
-            'role',
             'is_active',
             'ip_address',
             'phone_number',
@@ -144,6 +142,41 @@ class UserDetailSerializer(serializers.ModelSerializer):
             'unit',
             'profile',
         ]
+
+
+class UserManageUnitSerializer(serializers.ModelSerializer):
+    position = serializers.SerializerMethodField(read_only=True)
+    department = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'username',
+            'is_active',
+            'ip_address',
+            'phone_number',
+            'is_online',
+            'real_name',
+            'position',
+            'department'
+        ]
+
+    @staticmethod
+    def get_position(obj):
+        profile = obj.profile
+        if isinstance(profile, CustomerProfile):
+            return profile.position
+        else:
+            return None
+
+    @staticmethod
+    def get_department(obj):
+        profile = obj.profile
+        if isinstance(profile, CustomerProfile):
+            return profile.department
+        else:
+            return None
 
 
 #

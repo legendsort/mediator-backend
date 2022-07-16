@@ -318,7 +318,7 @@ class Submit(TimeStampMixin):
                     Q(id=self.dealer.id) | Q(id=order.user.id) | Q(is_superuser=True))
             else:
                 users = apps.get_model('Account.User').objects.filter(
-                    Q(role__permissions__codename='manage_request') | Q(id=order.user.id) | Q(is_superuser=True))
+                    Q(role__permissions__codename='manage_paper') | Q(id=order.user.id) | Q(is_superuser=True))
             notification = NotificationService()
             for user in users.distinct():
                 notification.set_user(user)

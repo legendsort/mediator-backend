@@ -16,7 +16,7 @@ from typing import Optional
 
 
 # Notify to user via channels
-class NotificationService:
+class NotifyService:
     def __init__(self, user=AnonymousUser()):
         self.user = user
         self.channel_prefix = 'notify'
@@ -41,7 +41,7 @@ class NotificationService:
 
 # Notify parser procedure
 class NotifyParserService:
-    def __init__(self, data, mode: str, file_path: str, notifier: Optional['NotificationService'] = None):
+    def __init__(self, data, mode: str, file_path: str, notifier: Optional['NotifyService'] = None):
         self.data = data
         self.file_path = file_path
         self.notifier = notifier
@@ -50,8 +50,8 @@ class NotifyParserService:
         else:
             self.mode = None
 
-    def do_notify(self, user, to_user) -> NotificationService:
-        self.notifier = NotificationService(user)
+    def do_notify(self, user, to_user) -> NotifyService:
+        self.notifier = NotifyService(user)
         return self.notifier
 
     def remove_file(self):
@@ -84,7 +84,7 @@ class NotifyParserService:
 
 
 # Gateway service for connecting gateway service with different api
-class GatewayService(NotificationService):
+class GatewayService(NotifyService):
     NIS_SEND_DIR_PATH = getattr(settings, 'NIS_SEND_DIR_PATH', '/media')
     NIS_RECEIVE_DIR_PATH = getattr(settings, 'NIS_RECEIVE_DIR_PATH', '/media')
 

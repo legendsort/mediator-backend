@@ -7,14 +7,15 @@ class PublisherAccessPolicy(AccessPolicy):
         {
             "action": ["list", "retrieve"],
             "principal": "*",
-            "condition": "has_permission:view_contest",
+            "condition": ["has_permissions"],
             "effect": "allow"
         },
     ]
 
-    def has_permission(self, request, view) -> bool:
+    @staticmethod
+    def has_permissions(request, view, action) -> bool:
         user = request.user
-        return user.has_perm('view_contest') or user.has_perm('manage_contest')
+        return user.has_perm('view_paper') or user.has_perm('manage_paper')
 
 
 class JournalAccessPolicy(AccessPolicy):
@@ -98,3 +99,36 @@ class SubmissionAccessPolicy(AccessPolicy):
     def has_perms(request, view, action, field: str) -> bool:
         user = request.user
         return user.has_perm(field)
+
+
+class RequestAccessPolicy(AccessPolicy):
+    statements = [
+        {
+            "action": ["destroy", "update", "partial_update", "create"],
+            "principal": "*",
+            "condition": "has_permissions:view_request",
+            "effect": "allow"
+        },
+        {
+            "action": ["accept", "reject", "pub_check"],
+            "principal": "*",
+            "condition": "has_permissions:manage_request",
+            "effect": "allow"
+        },
+        {
+            "action": ["list", "retrieve"],
+            "principal": "*",
+            "effect": "allow",
+            "condition": ["can_view_request"],
+        },
+    ]
+
+    @staticmethod
+    def can_view_request(request, view, actions):
+        user = request.user
+        return user.has_perm('view_request') or user.has_perm('manage_request')
+
+    @staticmethod
+    def has_permissions(request, view, actions, params=None) -> bool:
+        user = request.user
+        return user.has_perm(params)

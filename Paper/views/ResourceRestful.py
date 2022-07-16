@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets
 import Paper.serializers
 from Paper.models import Journal, Status, Resource
-from Paper.serializers import ResourceUploadSerializer, ResourceSerializer, ResourceDetailSerializer, ResourceUploadDetailSerializer
+from Paper.serializers import ResourceUploadSerializer, ResourceDetailSerializer, ResourceUploadDetailSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
 from Paper.helper import StandardResultsSetPagination
@@ -15,6 +15,8 @@ from Paper.helper import filter_params
 from Account.models import BusinessType
 from rest_framework_tricks.filters import OrderingFilter
 from django.apps import apps
+from django.db.models import Q
+from Paper.policies import RequestAccessPolicy
 
 
 class ResourceFilter(django_filters.FilterSet):
@@ -22,7 +24,7 @@ class ResourceFilter(django_filters.FilterSet):
     id = django_filters.CharFilter(method='search_by_order_id', lookup_expr='icontains')    
     start_updated_at = django_filters.DateTimeFilter(field_name='updated_at', lookup_expr='gt')
     end_updated_at = django_filters.DateTimeFilter(field_name='updated_at', lookup_expr='lt')
-    status = django_filters.CharFilter(method='search_by_status_name', lookup_expr='icontains')
+    status = django_filters.CharFilter(method='search_by_status_id', lookup_expr='icontains')
     type = django_filters.CharFilter(method='search_by_type', lookup_expr='icontains')
     dealer = django_filters.CharFilter(method='search_by_dealer', lookup_expr='icontains')
 
@@ -37,8 +39,8 @@ class ResourceFilter(django_filters.FilterSet):
         return queryset.filter(order__id=value)
 
     @staticmethod
-    def search_by_status_name(queryset, name, value):        
-        status_id = Status.objects.get(name=value)        
+    def search_by_status_id(queryset, name, value):
+        status_id = Status.objects.get(id=value)
         return queryset.filter(order__status_id=status_id) 
 
     @staticmethod
@@ -277,7 +279,6 @@ class ResourceUploadViewSet(viewsets.ModelViewSet):
         try:
             message = request.data.get('message')
             status_id = request.data.get('status_id')
-            print(status_id)
             instance.update_status(Status.objects.get(pk=status_id), message=message)
             instance.save()
             return JsonResponse({
@@ -301,13 +302,12 @@ class ResourceUploadViewSet(viewsets.ModelViewSet):
             
 
 class ResourceViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated, RequestAccessPolicy]
     serializer_class = Paper.serializers.ResourceSerializer
     pagination_class = StandardResultsSetPagination
     renderer_classes = [JSONResponseRenderer]
     filterset_class = ResourceFilter
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    queryset = Resource.objects.filter(flag=False)
     ordering_fields = {
         'id': 'id',
         'title': 'title',
@@ -325,10 +325,20 @@ class ResourceViewSet(viewsets.ModelViewSet):
             'id'
         ])
 
+    def get_queryset(self):
+        auth_user = self.request.user
+        if auth_user.is_superuser:
+            return Resource.objects.filter(flag=False)
+        elif auth_user.has_perm('view_request'):
+            return Resource.objects.filter(order__user=auth_user, flag=False)
+        elif auth_user.has_perm('manage_request'):
+            return Resource.objects.filter(Q(dealer=auth_user, flag=False) | Q(dealer=None, flag=False))
+        else:
+            return Resource.objects.filter(pk=None)
+
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return ResourceDetailSerializer
-        
         return Paper.serializers.ResourceSerializer
 
     def create(self, request, *args, **kwargs):
@@ -336,14 +346,12 @@ class ResourceViewSet(viewsets.ModelViewSet):
         try:
             base_data = self.get_base_data()
             serializer = Paper.serializers.ResourceSerializer(data=base_data)
-            type_id = request.data.get('type_id')
-            if serializer.is_valid():                
+            if serializer.is_valid():
                 serializer.save()
                 user = request.user
                 instance = serializer.instance
                 status = Status.objects.get(name='Requested') 
-                business_type = BusinessType.objects.get(pk=type_id)               
-                order = instance.set_order(user=request.user, status=status, business_type=business_type)
+                instance.set_order(user=request.user, status=status)
                 instance.update_status(Status.objects.get(name='Requested'),
                                        message=f"RequestStatus has been started by {user.username}")
             else:
@@ -386,18 +394,16 @@ class ResourceViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            user = request.user
-            instance.update_status(Status.objects.get(name='Updated'),
-                                   message=f"Request Status has been Updated by {user.username}")              
+            order = instance.get_order()
+            if order.status != Status.objects.get(name='Requested'):
+                return JsonResponse({
+                    'response_code': False,
+                    'data': [],
+                    'message': 'This request could not update content'
+                })
             serializer = Paper.serializers.ResourceSerializer(instance, data=self.get_base_data(), partial=True)
-            if serializer.is_valid():    
-                order = instance.get_order()
-                if order and order.status == Status.objects.get(name='Requested'):
-                    type_id = request.data.get('type_id')
-                    business_type = BusinessType.objects.get(pk=type_id) 
-                    order.type = business_type
-                    order.save()                   
-                    serializer.save()
+            if serializer.is_valid():
+                serializer.save()
             else:
                 return JsonResponse({
                     'response_code': False,
@@ -407,7 +413,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
             return JsonResponse({
                 'response_code': True,
                 'data': serializer.data,
-                'message': 'Journal has been updated'
+                'message': 'Request has been updated'
             })
             pass
         except Exception as e:
@@ -464,7 +470,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
 
     # accept request
     @action(detail=True, methods=['post'], url_path='pubcheck')
-    def pubcheck(self, request, pk=None):
+    def pub_check(self, request, pk=None):
         instance = self.get_object()
         try:
             user = request.user
@@ -489,10 +495,9 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 'response_code': False,
                 'data': [],
                 'message': "Server has error"
-            })            
+            })
 
-
-    # reject request
+    # accept request
     @action(detail=True, methods=['post'], url_path='reject')
     def reject(self, request, pk=None):
         instance = self.get_object()

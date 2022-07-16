@@ -72,7 +72,7 @@ class ProfileSerializer(serializers.RelatedField):
 
 
 class UnitSerializer(serializers.ModelSerializer):
-    created_at = serializers.DateTimeField(format="%Y-%m-%d")
+    created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
     businesses = BusinessSerializer(many=True, read_only=True)
 
     class Meta:

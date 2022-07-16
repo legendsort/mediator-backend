@@ -103,6 +103,7 @@ class SubmitViewSet(viewsets.ModelViewSet):
                 instance.status = Status.objects.get(name='New Submission')
                 instance.save()
                 instance.set_order()
+                instance.update_status(Status.objects.get(name='New Submission'))
 
             else:
                 print(serializer.errors)
@@ -155,7 +156,7 @@ class SubmitViewSet(viewsets.ModelViewSet):
                 instance.user = request.user
                 instance.save()
                 instance.set_order()
-                print(instance.order.first())
+                instance.update_status(Status.objects.get(name='New Submission'))
             else:
                 return JsonResponse({
                     'response_code': False,

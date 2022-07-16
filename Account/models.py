@@ -143,9 +143,6 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampMixin):
     def assign_perms(self, perms: dict):
         pass
 
-    def get_contact_list(self):
-        Order = apps.get_model('Paper.Order')
-
 
 class CustomerProfile(models.Model):
     position = models.CharField(max_length=255, null=True)

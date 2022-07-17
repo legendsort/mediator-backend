@@ -4,7 +4,7 @@ from rest_access_policy import AccessPolicy
 class UserAccessPolicy(AccessPolicy):
     statements = [
         {
-            'action': ['list', 'retrieve', 'create', 'destroy', 'reset_password'],
+            'action': ['list', 'retrieve', 'create', 'destroy', 'reset_password', 'create_user', 'update_user'],
             'principal': '*',
             'effect': 'allow',
             'condition': 'manageable_user'
@@ -39,7 +39,7 @@ class UserAccessPolicy(AccessPolicy):
 
     @staticmethod
     def manageable_user(request, view, action) -> bool:
-        if action == 'list' or action == 'retrieve':
+        if action == 'list' or action == 'retrieve' or action == 'create_user' or action == 'update_user':
             return request.user.has_perms(['manage_users']) or request.user.is_superuser or request.user.has_perms(['manage_unit'])
         else:
             return request.user.has_perms(['manage_users']) or request.user.is_superuser

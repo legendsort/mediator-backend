@@ -13,7 +13,7 @@ class Command(BaseCommand):
         pass
 
     def handle(self, *args, **options):
-        run_async_data_scan()
+        run_fetch_bank_data()
         # gateway_service = GatewayService()
         # gateway_service.send_request(action='upload_resource', data={
         #     'user': 'paper_id',})

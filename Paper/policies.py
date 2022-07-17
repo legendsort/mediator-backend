@@ -15,7 +15,7 @@ class PublisherAccessPolicy(AccessPolicy):
     @staticmethod
     def has_permissions(request, view, action) -> bool:
         user = request.user
-        return user.has_perm('view_paper') or user.has_perm('manage_paper')
+        return user.has_perm('view_paper') or user.has_perm('manage_paper') or user.is_superuser
 
 
 class JournalAccessPolicy(AccessPolicy):

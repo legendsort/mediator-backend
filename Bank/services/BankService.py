@@ -52,7 +52,9 @@ class BankService:
                         if not DataType.objects.filter(name=data_type).count():
                             DataType.objects.create(name=data_type)
                         data_type = DataType.objects.get(name=data_type)
-                        if Data.objects.filter(type=data_type, real_data_created_at=ele['upTime']).count():
+                        if not ele.get('upTime', False) or Data.objects.filter(type=data_type, real_data_created_at=ele['upTime']).count():
+                            continue
+                        if not len(ele['data']):
                             continue
                         data = Data()
                         data.type = data_type
@@ -73,6 +75,7 @@ class BankService:
         try:
             url = f"{self.base_url}/trade-info/fetch-succeed"
             response_code, message = self.call(url=url, data=data)
+            print(response_code, message)
             return response_code, message
         except Exception as e:
             print('exception send fetched data', e)

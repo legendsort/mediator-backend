@@ -143,6 +143,20 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampMixin):
     def assign_perms(self, perms: dict):
         pass
 
+    def get_role_of_user(self):
+        permissions = [perm.codename for perm in self.role.permissions.all()]
+        if 'view_paper' in permissions:
+            role = Role.objects.get(codename='paper')
+        elif 'view_wipo' in permissions:
+            role = Role.objects.get(codename='wipo')
+        elif 'view_contest' in permissions:
+            role = Role.objects.get(codename='contest')
+        elif 'view_bank' in permissions:
+            role = Role.objects.get(codename='bank')
+        else:
+            return None
+        return role
+
 
 class CustomerProfile(models.Model):
     position = models.CharField(max_length=255, null=True)

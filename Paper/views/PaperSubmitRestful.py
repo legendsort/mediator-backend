@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 import Paper.serializers
 from Paper.models import Journal, Publisher, Country, ReviewType, Submit, UploadFile, Requirement,\
     Order, Frequency, Article, Status
@@ -24,6 +24,17 @@ from Account.models import User, BusinessType
 
 # Submit API
 class SubmitFilter(django_filters.FilterSet):
+    order_id = django_filters.CharFilter(method='search_by_order_id', lookup_expr='icontains')
+    title = django_filters.CharFilter(field_name='title', lookup_expr='icontains')
+    status = django_filters.ModelMultipleChoiceFilter(field_name='status', queryset=Status.objects.all())
+    journal = django_filters.CharFilter(field_name='journal__name', lookup_expr='icontains')
+    dealer = django_filters.CharFilter(field_name='dealer__username', lookup_expr='icontains')
+    start_created_at = django_filters.DateTimeFilter(field_name='created_at', lookup_expr='gt')
+    end_created_at = django_filters.DateTimeFilter(field_name='created_at', lookup_expr='lt')
+
+    @staticmethod
+    def search_by_order_id(queryset, name, value):
+        return queryset.filter(order__id=value)
 
     class Meta:
         model = Submit
@@ -38,7 +49,14 @@ class SubmitViewSet(viewsets.ModelViewSet):
     pagination_class = StandardResultsSetPagination
     filterset_class = SubmitFilter
     renderer_classes = [JSONResponseRenderer, ]
-    filter_backends = [DjangoFilterBackend, ]
+    filter_backends = [DjangoFilterBackend,  filters.OrderingFilter]
+
+    ordering_fields = {
+        'title': 'title',
+        'id': 'order__id',
+        'created_at': 'created_at'
+    }
+    ordering = ['-created_at', 'title']
 
     def get_base_data(self):
         return filter_params(self.request.data, [

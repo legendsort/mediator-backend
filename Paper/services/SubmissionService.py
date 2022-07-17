@@ -10,16 +10,18 @@ from django.conf import settings
 import zipfile
 from os.path import basename
 from Account.services import GatewayService
+from Account.models import RemoteAccount
 
 
 class SubmissionService:
     def __init__(self, submit):
+        self.submit = submit
+        self.order = submit.set_order()
         self.DOCUMENT_ROOT_PATH = '/'.join([
             getattr(settings, 'MEDIA_ROOT', '/media'),
             'submissions',
             str(submit.id)
         ])
-        self.submit = submit
         self.document = Document()
         section = self.document.sections[0]
         section.page_height = Mm(297)
@@ -28,34 +30,92 @@ class SubmissionService:
         section.bottom_margin = Cm(2)
         section.left_margin = Cm(2)
         section.right_margin = Cm(2)
-        self.document_name = f"{self.submit.id}__{self.submit.title}.docx"
+        self.document_name = f"{self.order.id}__{self.submit.title}.docx"
         self.document_path = '/'.join([
             self.DOCUMENT_ROOT_PATH,
             self.document_name
         ])
-        self.zip_file_path = f"{self.DOCUMENT_ROOT_PATH}/{str(self.submit.id)}.zip"
+        self.zip_file_path = f"{self.DOCUMENT_ROOT_PATH}/{str(self.order.id)}.zip"
 
     def create_information_document(self):
         styles = self.document.styles
-        left_style = styles.add_style('leftmatch', WD_STYLE_TYPE.PARAGRAPH)
+        left_style = styles.add_style('left-match', WD_STYLE_TYPE.PARAGRAPH)
         left_style.font.name = u'arial'
-        left_style.font.size = Pt(12)
+        left_style.font.size = Pt(13)
         left_style.paragraph_format.space_after = Pt(1)
-        records = (
-            (3, '101', 'Spam'),
-            (7, '422', 'Eggs'),
-            (4, '631', 'Spam, spam, eggs, and spam')
-        )
-        table = self.document.add_table(rows=1, cols=3)
-        hdr_cells = table.rows[0].cells
-        hdr_cells[0].text = 'Qty'
-        hdr_cells[1].text = 'Id'
-        hdr_cells[2].text = 'Desc'
-        for qty, id, desc in records:
+        self.document.add_paragraph('Submission information', style='left-match').add_run().add_break()
+        self.document.add_paragraph(f"submission title: {self.submit.title}", style='left-match').add_run().add_break()
+        self.document.add_paragraph(f"submission article: {self.submit.article.name}", style='left-match').add_run().add_break()
+        self.document.add_paragraph(f"submission journal: {self.submit.journal.name}", style='left-match').add_run().add_break()
+        self.document.add_paragraph(f"submission publisher: {self.submit.journal.publisher.name}", style='left-match').add_run().add_break()
+        self.document.add_paragraph(f"submission abstract: {self.submit.abstract}", style='left-match').add_run().add_break()
+        self.document.add_paragraph(f"submission keywords: {self.submit.keywords}", style='left-match').add_run().add_break()
+        p = self.document.add_paragraph(f"submission major: {self.submit.major}", style='left-match').add_run()
+        p.add_break(WD_BREAK.PAGE)
+        self.document.add_paragraph('Account information', style='left-match').add_run().add_break()
+        self.document.add_paragraph(f"submission username : {self.submit.user.username}", style='left-match').add_run().add_break()
+        remote_accounts = RemoteAccount.objects.filter(profile=self.submit.user.profile)
+        self.document.styles.add_style('table-type', WD_STYLE_TYPE.TABLE)
+        # create account table
+        table_header_texts = [
+            'No',
+            'Email Address',
+            'password',
+            'Site Address',
+            'Journal Name',
+            'Available',
+        ]
+        table = self.document.add_table(1, 6, style='table-type')
+        table.style = 'Table Grid'
+        table_header = table.rows[0].cells
+        index = 0
+        for header_text in table_header_texts:
+            table_header[index].text = header_text
+            table_header[index].paragraphs[0].runs[0].font.bold = True
+            table_header[index].paragraphs[0].runs[0].font.size = Pt(13)
+            table_header[index].paragraphs[0].runs[0].font.name = u'arial'
+            index += 1
+        index_number = 1
+        for r_account in remote_accounts:
             row_cells = table.add_row().cells
-            row_cells[0].text = str(qty)
-            row_cells[1].text = id
-            row_cells[2].text = desc
+            row_cells[0].text = str(index_number)
+            row_cells[1].text = r_account.username
+            row_cells[2].text = r_account.password
+            row_cells[3].text = r_account.host
+            row_cells[4].text = r_account.journal.name if r_account.journal else ''
+            row_cells[5].text = 'true' if r_account.is_available else 'false'
+            index_number += 1
+
+        # resource information
+        p = self.document.add_paragraph('', style='left-match').add_run()
+        p.add_break()
+        p.add_break()
+        p.add_break()
+        self.document.add_paragraph('Resource information', style='left-match').add_run().add_break()
+        resource_table = self.document.add_table(1, 3, style='table-type')
+        resource_table_header_texts = [
+            'No',
+            'Requirement',
+            'File Name',
+        ]
+        resource_table_header = resource_table.rows[0].cells
+        index = 0
+        for header_text in resource_table_header_texts:
+            resource_table_header[index].text = header_text
+            resource_table_header[index].paragraphs[0].runs[0].font.bold = True
+            resource_table_header[index].paragraphs[0].runs[0].font.size = Pt(13)
+            resource_table_header[index].paragraphs[0].runs[0].font.name = u'arial'
+            index += 1
+        index = 0
+
+        for file in self.submit.get_upload_files():
+            row = resource_table.add_row().cells
+            row[0].text = str(index)
+            row[1].text = str(file.requirement.name)
+            row[2].text = str(file.name)
+            print(file.requirement.name)
+            index += 1
+        resource_table.style = 'Table Grid'
         self.save_document()
 
     def save_document(self):

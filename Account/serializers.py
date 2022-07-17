@@ -147,6 +147,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
 class UserManageUnitSerializer(serializers.ModelSerializer):
     position = serializers.SerializerMethodField(read_only=True)
     department = serializers.SerializerMethodField(read_only=True)
+    created_at = serializers.DateTimeField(format="%Y-%m-%d", read_only=True)
 
     class Meta:
         model = User
@@ -159,7 +160,8 @@ class UserManageUnitSerializer(serializers.ModelSerializer):
             'is_online',
             'real_name',
             'position',
-            'department'
+            'department',
+            'created_at'
         ]
 
     @staticmethod

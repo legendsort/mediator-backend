@@ -284,17 +284,21 @@ class Submit(TimeStampMixin):
         return errors
 
     def set_order(self) -> Order:
-        if Order.objects.filter(order_submit=self).exists():
-            return Order.objects.get(order_submit=self)
-        else:
-            order = Order()
-            order.type = apps.get_model('Account.BusinessType').objects.get(codename='paper')
-            order.user = self.user
-            order.status = self.status
-            order.product = self
-            order.save()
-            order.status_logs.add(self.status)
-            return order
+        try:
+            if Order.objects.filter(order_submit=self).exists():
+                return Order.objects.get(order_submit=self)
+            else:
+                order = Order()
+                order.type = apps.get_model('Account.BusinessType').objects.get(codename='paper')
+                order.user = self.user
+                order.status = self.status
+                order.product = self
+                order.save()
+                order.status_logs.add(self.status,  through_defaults={'message': f"Submission has been created by {self.user.real_name}"})
+                return order
+        except Exception as e:
+            print('set order error on submission', e)
+            return Order()
 
     def update_status(self, status, message=None):
         try:

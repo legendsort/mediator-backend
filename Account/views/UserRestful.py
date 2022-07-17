@@ -25,11 +25,11 @@ class UserFilter(django_filters.FilterSet):
     end_created_at = django_filters.DateTimeFilter(field_name='created_at', lookup_expr='lt')
     role = django_filters.ModelMultipleChoiceFilter(field_name='role', queryset=Role.objects.all())
     unit = django_filters.ModelMultipleChoiceFilter(field_name='unit', queryset=Unit.objects.all())
-
+    is_active = django_filters.CharFilter(field_name='is_active', lookup_expr='exact')
     class Meta:
         model = User
         fields = {
-            'username': ['icontains']
+            'username': ['icontains'],
         }
 
 
@@ -59,11 +59,13 @@ class UserViewSet(ModelViewSet):
 
     def get_serializer_class(self):
         auth_user = self.request.user
-        if self.action == 'get_self_info' or self.action == 'retrieve':
+        if self.action == 'get_self_info':
+            return UserDetailSerializer
+        if auth_user.is_superuser and self.action == 'retrieve':
             return UserDetailSerializer
         elif self.action == 'update' or self.action == 'partial_update' or self.action == 'create':
             return UserDetailSerializer
-        if (self.action == 'list' or self.action == 'retrieve' ) and not auth_user.is_superuser and auth_user.has_perm('manage_unit'):
+        if (self.action == 'list' or self.action == 'retrieve') and not auth_user.is_superuser and auth_user.has_perm('manage_unit'):
             return UserManageUnitSerializer
         return UserListSerializer
 
@@ -298,4 +300,89 @@ class UserViewSet(ModelViewSet):
                 'response_code': False,
                 'data': [],
                 'message': 'Change failed'
+            })
+
+    @action(detail=False, url_path='create-user', methods=['post'])
+    def create_user(self, request):
+        try:
+            serializer = UserManageUnitSerializer(data=request.data)
+            auth_user = request.user
+            unit = auth_user.unit
+            role = auth_user.get_role_of_user()
+            if serializer.is_valid():
+                serializer.save()
+                instance = serializer.instance
+                instance.unit = unit
+                instance.role = role
+                instance.save()
+                if request.data.get('position', None) or request.data.get('department', None):
+                    profile = CustomerProfile(position=request.data.get('position'), department=request.data.get('department'))
+                    profile.save()
+                    instance.profile = profile
+                    instance.save()
+
+            else:
+                return JsonResponse({
+                    'response_code': False,
+                    'data': serializer.errors,
+                    'message': 'Validation error'
+                })
+            return JsonResponse({
+                'response_code': True,
+                'data': serializer.data,
+                'message': 'Successfully created!'
+            })
+        except Exception as e:
+            print('----', e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Failed create Role'
+            })
+
+    @action(detail=True, url_path='update-user', methods=['put'])
+    def update_user(self, request, pk=None):
+        try:
+            instance = self.get_object()
+            auth_user = request.user
+            if not auth_user.is_superuser and auth_user.unit != instance.unit:
+                return JsonResponse({
+                    'response_code': False,
+                    'data': [],
+                    'message': 'You have no permission with this action. Please contact administrator'
+                })
+            serializer = UserManageUnitSerializer(instance, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                instance = serializer.instance
+                if request.data.get('position', None) or request.data.get('department', None):
+                    profile = instance.profile
+                    if not profile:
+                        profile = CustomerProfile(position=request.data.get('position'),
+                                                  department=request.data.get('department'))
+                    else:
+                        profile.position = request.data.get('position', profile.position)
+                        profile.department = request.data.get('department', profile.department)
+                    profile.save()
+                    instance.profile = profile
+                    instance.save()
+
+            else:
+                return JsonResponse({
+                    'response_code': False,
+                    'data': [],
+                    'message': serializer.errors
+                })
+            return JsonResponse({
+                'response_code': True,
+                'data': serializer.data,
+                'message': 'Journal has been updated'
+            })
+            pass
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'server has error'
             })

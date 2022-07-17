@@ -315,6 +315,12 @@ class SubmitViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         try:
             submission_service = SubmissionService(instance)
+            if not instance.dealer:
+                return JsonResponse({
+                    'response_code': False,
+                    'data': [],
+                    'message': 'This submission information can not send data. Please accept this submission'
+                })
             res_data = submission_service.send()
             if res_data:
                 return JsonResponse(res_data)

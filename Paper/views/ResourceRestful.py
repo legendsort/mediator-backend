@@ -59,7 +59,6 @@ class ResourceUploadViewSet(viewsets.ModelViewSet):
     renderer_classes = [JSONResponseRenderer]
     filterset_class = ResourceFilter
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    queryset = Resource.objects.filter(flag=True)
     ordering_fields = {
         'title': 'title',
         'id': 'id',
@@ -73,6 +72,13 @@ class ResourceUploadViewSet(viewsets.ModelViewSet):
             'detail',
             'created_at',
         ])
+
+    def get_queryset(self):
+        auth_user = self.request.user
+        if auth_user.has_perm('manage_resource'):
+            return Resource.objects.filter(flag=True)
+        else:
+            return Resource.objects.filter(flag=True, order__user=auth_user)
 
     def get_serializer_class(self):
         if self.action == 'create_upload':

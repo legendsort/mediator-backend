@@ -72,7 +72,7 @@ class SubmissionService:
         for header_text in table_header_texts:
             table_header[index].text = header_text
             table_header[index].paragraphs[0].runs[0].font.bold = True
-            table_header[index].paragraphs[0].runs[0].font.size = Pt(13)
+            table_header[index].paragraphs[0].runs[0].font.size = Pt(12)
             table_header[index].paragraphs[0].runs[0].font.name = u'arial'
             index += 1
         index_number = 1
@@ -90,7 +90,6 @@ class SubmissionService:
         p = self.document.add_paragraph('', style='left-match').add_run()
         p.add_break()
         p.add_break()
-        p.add_break()
         self.document.add_paragraph('Resource information', style='left-match').add_run().add_break()
         resource_table = self.document.add_table(1, 3, style='table-type')
         resource_table_header_texts = [
@@ -103,7 +102,7 @@ class SubmissionService:
         for header_text in resource_table_header_texts:
             resource_table_header[index].text = header_text
             resource_table_header[index].paragraphs[0].runs[0].font.bold = True
-            resource_table_header[index].paragraphs[0].runs[0].font.size = Pt(13)
+            resource_table_header[index].paragraphs[0].runs[0].font.size = Pt(12)
             resource_table_header[index].paragraphs[0].runs[0].font.name = u'arial'
             index += 1
         index = 0
@@ -116,6 +115,45 @@ class SubmissionService:
             print(file.requirement.name)
             index += 1
         resource_table.style = 'Table Grid'
+        # author information
+        p = self.document.add_paragraph('', style='left-match').add_run()
+        p.add_break()
+        p.add_break()
+        self.document.add_paragraph('Author information', style='left-match').add_run().add_break()
+        author_table = self.document.add_table(1, 8, style='table-type')
+        author_table_header_texts = [
+            'No',
+            'Appellation',
+            'First Name',
+            'Last Name',
+            'Email',
+            'Reason',
+            'Country',
+            'Type',
+        ]
+        author_table_header = author_table.rows[0].cells
+        index = 0
+        for header_text in author_table_header_texts:
+            author_table_header[index].text = header_text
+            author_table_header[index].paragraphs[0].runs[0].font.bold = True
+            author_table_header[index].paragraphs[0].runs[0].font.size = Pt(12)
+            author_table_header[index].paragraphs[0].runs[0].font.name = u'arial'
+            index += 1
+        index = 0
+
+        for author in self.submit.get_authors():
+            row = author_table.add_row().cells
+            row[0].text = str(index)
+            row[1].text = str(author.appellation)
+            row[2].text = str(author.first_name)
+            row[3].text = str(author.last_name)
+            row[4].text = str(author.email)
+            row[5].text = str(author.reason)
+            row[6].text = str(author.country.name)
+            row[7].text = str(author.type)
+            index += 1
+        author_table.style = 'Table Grid'
+
         self.save_document()
 
     def save_document(self):

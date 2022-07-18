@@ -27,6 +27,7 @@ class SubmitFilter(django_filters.FilterSet):
     order_id = django_filters.CharFilter(method='search_by_order_id', lookup_expr='icontains')
     title = django_filters.CharFilter(field_name='title', lookup_expr='icontains')
     status = django_filters.ModelMultipleChoiceFilter(field_name='status', queryset=Status.objects.all())
+    article = django_filters.ModelMultipleChoiceFilter(field_name='article', queryset=Article.objects.all())
     journal = django_filters.CharFilter(field_name='journal__name', lookup_expr='icontains')
     dealer = django_filters.CharFilter(field_name='dealer__username', lookup_expr='icontains')
     start_created_at = django_filters.DateTimeFilter(field_name='created_at', lookup_expr='gt')

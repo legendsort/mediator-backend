@@ -30,7 +30,7 @@ class SubmissionService:
         section.bottom_margin = Cm(2)
         section.left_margin = Cm(2)
         section.right_margin = Cm(2)
-        self.document_name = f"{self.order.id}__{self.submit.title}.docx"
+        self.document_name = f"{self.order.id}.docx"
         self.document_path = '/'.join([
             self.DOCUMENT_ROOT_PATH,
             self.document_name
@@ -54,6 +54,23 @@ class SubmissionService:
         p.add_break(WD_BREAK.PAGE)
         self.document.add_paragraph('Account information', style='left-match').add_run().add_break()
         self.document.add_paragraph(f"submission username : {self.submit.user.username}", style='left-match').add_run().add_break()
+        # remote account information
+        self.create_account_table()
+        # resource information
+        p = self.document.add_paragraph('', style='left-match').add_run()
+        p.add_break()
+        p.add_break()
+        self.document.add_paragraph('Resource information', style='left-match').add_run().add_break()
+        self.create_resource_table()
+        # author information
+        p = self.document.add_paragraph('', style='left-match').add_run()
+        p.add_break()
+        p.add_break()
+        self.document.add_paragraph('Author information', style='left-match').add_run().add_break()
+        self.create_author_table()
+        self.save_document()
+
+    def create_account_table(self):
         remote_accounts = RemoteAccount.objects.filter(profile=self.submit.user.profile)
         self.document.styles.add_style('table-type', WD_STYLE_TYPE.TABLE)
         # create account table
@@ -86,40 +103,7 @@ class SubmissionService:
             row_cells[5].text = 'true' if r_account.is_available else 'false'
             index_number += 1
 
-        # resource information
-        p = self.document.add_paragraph('', style='left-match').add_run()
-        p.add_break()
-        p.add_break()
-        self.document.add_paragraph('Resource information', style='left-match').add_run().add_break()
-        resource_table = self.document.add_table(1, 3, style='table-type')
-        resource_table_header_texts = [
-            'No',
-            'Requirement',
-            'File Name',
-        ]
-        resource_table_header = resource_table.rows[0].cells
-        index = 0
-        for header_text in resource_table_header_texts:
-            resource_table_header[index].text = header_text
-            resource_table_header[index].paragraphs[0].runs[0].font.bold = True
-            resource_table_header[index].paragraphs[0].runs[0].font.size = Pt(12)
-            resource_table_header[index].paragraphs[0].runs[0].font.name = u'arial'
-            index += 1
-        index = 0
-
-        for file in self.submit.get_upload_files():
-            row = resource_table.add_row().cells
-            row[0].text = str(index)
-            row[1].text = str(file.requirement.name)
-            row[2].text = str(file.name)
-            print(file.requirement.name)
-            index += 1
-        resource_table.style = 'Table Grid'
-        # author information
-        p = self.document.add_paragraph('', style='left-match').add_run()
-        p.add_break()
-        p.add_break()
-        self.document.add_paragraph('Author information', style='left-match').add_run().add_break()
+    def create_author_table(self):
         author_table = self.document.add_table(1, 8, style='table-type')
         author_table_header_texts = [
             'No',
@@ -139,7 +123,7 @@ class SubmissionService:
             author_table_header[index].paragraphs[0].runs[0].font.size = Pt(12)
             author_table_header[index].paragraphs[0].runs[0].font.name = u'arial'
             index += 1
-        index = 0
+        index = 1
 
         for author in self.submit.get_authors():
             row = author_table.add_row().cells
@@ -154,7 +138,30 @@ class SubmissionService:
             index += 1
         author_table.style = 'Table Grid'
 
-        self.save_document()
+    def create_resource_table(self):
+        resource_table = self.document.add_table(1, 3, style='table-type')
+        resource_table_header_texts = [
+            'No',
+            'Requirement',
+            'File Name',
+        ]
+        resource_table_header = resource_table.rows[0].cells
+        index = 0
+        for header_text in resource_table_header_texts:
+            resource_table_header[index].text = header_text
+            resource_table_header[index].paragraphs[0].runs[0].font.bold = True
+            resource_table_header[index].paragraphs[0].runs[0].font.size = Pt(12)
+            resource_table_header[index].paragraphs[0].runs[0].font.name = u'arial'
+            index += 1
+        index = 1
+
+        for file in self.submit.get_upload_files():
+            row = resource_table.add_row().cells
+            row[0].text = str(index)
+            row[1].text = str(file.requirement.name)
+            row[2].text = str(file.name)
+            index += 1
+        resource_table.style = 'Table Grid'
 
     def save_document(self):
         try:
@@ -175,7 +182,6 @@ class SubmissionService:
             print('create folder error', e)
 
     def zip_data(self):
-        print('----', self.zip_file_path)
         with zipfile.ZipFile(self.zip_file_path, 'w') as zipObj:
             zipObj.write(self.document_path, basename(self.document_name))
             for file in self.submit.get_upload_files():

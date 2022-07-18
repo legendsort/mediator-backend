@@ -64,7 +64,8 @@ class BankService:
                         fetched_data_id_list.append(ele['_id'])
                     except DataType.DoesNotExist:
                         pass
-                self.send_fetched_data(data={'id': fetched_data_id_list})
+                if len(fetched_data_id_list):
+                    self.send_fetched_data(data={'id': fetched_data_id_list})
             else:
                 print(response_code, res_data)
         except Exception as e:
@@ -75,7 +76,7 @@ class BankService:
         try:
             url = f"{self.base_url}/trade-info/fetch-succeed"
             response_code, message = self.call(url=url, data=data)
-            print(response_code, message)
+            print(data, response_code, message)
             return response_code, message
         except Exception as e:
             print('exception send fetched data', e)

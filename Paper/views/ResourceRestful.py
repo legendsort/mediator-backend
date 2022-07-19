@@ -235,6 +235,7 @@ class ResourceUploadViewSet(viewsets.ModelViewSet):
             if serializer.is_valid():
                 upload_files = request.data.getlist('files')
                 codename = request.data.get('codename')
+                status = request.data.get('status')
                 # if not upload_files: 
                 #     raise ValidationError('upload_files')
                 
@@ -244,9 +245,10 @@ class ResourceUploadViewSet(viewsets.ModelViewSet):
                 instance.set_upload_files(upload_files)
                 instance.flag = 1
                 instance.save()
-                type = apps.get_model('Account.BusinessType').objects.get(codename=codename)
-                status = Status.objects.get(name='New upload resource' if codename != 'contest' else 'Accepted')
-                instance.set_order(request.user, status, type)
+                businessType = apps.get_model('Account.BusinessType').objects.get(name=codename)
+                print(businessType)
+                status = Status.objects.get(name=status if status else 'New upload resource')
+                instance.set_order(request.user, status, businessType)
                 pass
             else:
                 print(serializer.errors)

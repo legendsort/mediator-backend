@@ -393,6 +393,7 @@ class Resource(TimeStampMixin):
                 order.user = user
                 order.status = status
                 order.product = self
+                order.type = business_type
                 order.save()
                 return order        
         except Exception as e:

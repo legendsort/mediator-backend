@@ -25,6 +25,10 @@ def journal_resource_path(instance, filename):
     return f"upload/journals/{instance.name}/{hashlib.md5(str(filename).encode('utf-8')).hexdigest()}{pathlib.Path(filename).suffix}"
 
 
+def exchange_attachment_path(instance, filename):
+    return f"upload/exchanges/{hashlib.md5(str(instance.title).encode('utf-8')).hexdigest()}/{hashlib.md5(str(filename).encode('utf-8')).hexdigest()}{pathlib.Path(filename).suffix}"
+
+
 def submit_upload_path(instance, filename):
     return f"upload/submit-papers/{instance.submit.id}/{hashlib.md5(str(filename).encode('utf-8')).hexdigest()}{pathlib.Path(filename).suffix}"
 

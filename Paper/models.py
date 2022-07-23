@@ -3,7 +3,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from Paper.helper import publisher_logo_path, journal_resource_path, submit_upload_path, censor_file_path
+from Paper.helper import publisher_logo_path, journal_resource_path, submit_upload_path, censor_file_path, exchange_attachment_path
 from django.apps import apps
 from Account.services.NotificationService import NotificationService
 from django.db.models import Q
@@ -457,3 +457,71 @@ class Author(TimeStampMixin):
     appellation = models.CharField(max_length=12,
                                    choices=Appellation.choices,
                                    default=Appellation.MR,)
+
+
+class Exchange(TimeStampMixin):
+    order = GenericRelation(Order, related_query_name='order_exchange')
+    is_upload = models.BooleanField(default=True)
+    title = models.CharField(max_length=255, null=True)
+    purpose = models.CharField(max_length=255, null=True)
+    site_url = models.CharField(max_length=255, null=True)
+    additional_info = models.JSONField(null=True)
+    detail = models.TextField(null=True)
+    dealer = models.ForeignKey('Account.User', on_delete=models.DO_NOTHING, related_name='exchange_dealer', null=True)
+    attachment = models.FileField(null=True, upload_to=exchange_attachment_path, max_length=1024)
+
+    def get_order(self):
+        if Order.objects.filter(order_exchange=self).exists():
+            return Order.objects.get(order_exchange=self)
+        else:
+            return None
+
+    def set_order(self, user=None, status=None):
+        try:
+            if Order.objects.filter(order_exchange=self).exists():
+                return Order.objects.get(order_exchange=self)
+            else:
+                order = Order()
+                order.user = user
+                order.status = status
+                order.product = self
+                order.save()
+                return order
+        except Exception as e:
+            print(e)
+            return False
+
+    def update_status(self, status, message=None):
+        try:
+            self.status = status
+            order = self.set_order()
+            prev_status = order.status
+            order.status = status
+            order.status_logs.add(self.status, through_defaults={'message': message})
+            order.save()
+            self.save()
+            notify_msg = {
+                'type': 'exchange',
+                'data': {
+                    'order_id': order.id,
+                    'previous_status': prev_status.name if prev_status else '',
+                    'current_status': status.name if status else '',
+                }
+            }
+            if self.dealer:
+                users = apps.get_model('Account.User').objects.filter(
+                    Q(id=self.dealer.id) | Q(id=order.user.id) | Q(is_superuser=True))
+            else:
+                users = apps.get_model('Account.User').objects.filter(
+                    Q(role__permissions__codename='manage_request') | Q(id=order.user.id) | Q(is_superuser=True))
+            notification = NotificationService()
+            for user in users.distinct():
+                notification.set_user(user)
+                notification.notify(notify_msg)
+        except Exception as e:
+            print('---------', e)
+            return False
+
+    def get_status_logs(self):
+        order = self.set_order()
+        return OrderStatusLog.objects.filter(order=order).order_by('-created_at')

@@ -161,9 +161,10 @@ class Status(models.Model):
         SUBMISSION = 'submission', _('Submission')
         REQUEST = 'request', _('Request')
         RESOURCE_UPLOAD = 'resource upload', _('Resource Upload')
+        EXCHANGE = 'exchange', _('Exchange')
     type = models.CharField(max_length=64, choices=StatusType.choices, default=StatusType.SUBMISSION, )
     name = models.CharField(max_length=255, unique=True)
-    codename = models.CharField(max_length=255, null=True)
+    codename = models.CharField(max_length=255, unique=True, null=True)
     description = models.TextField(null=True)
 
     def __str__(self):

@@ -1,4 +1,5 @@
 import json
+import os
 from rest_framework.decorators import action
 import django.db.utils
 from django.db.models import Q
@@ -20,6 +21,9 @@ from Paper.policies import PublisherAccessPolicy, SubmissionAccessPolicy
 from Paper.helper import filter_params, SubmissionStatus
 from Paper.services import SubmissionService
 from Account.models import User, BusinessType
+from django.http import FileResponse
+import mimetypes
+from django.http import HttpResponse
 
 
 # Submit API
@@ -362,3 +366,36 @@ class SubmitViewSet(viewsets.ModelViewSet):
                 'message': "Server has error"
             })
 
+    # send information of submit
+    @action(detail=True, methods=['GET'], url_path='download')
+    def download(self, request, pk=None):
+        instance = self.get_object()
+        try:
+            submission_service = SubmissionService(instance)
+            if not instance.dealer:
+                return JsonResponse({
+                    'response_code': False,
+                    'data': [],
+                    'message': 'This submission information can not send data. Please accept this submission'
+                })
+            res_data = submission_service.make_zip_file()
+            if os.path.exists(submission_service.zip_file_path):
+                with open(submission_service.zip_file_path, 'rb') as fh:
+                    mimetype, _ = mimetypes.guess_type(submission_service.zip_file_path)
+                    response = HttpResponse(fh.read(), content_type=mimetype)
+                    response['Content-Length'] = os.path.getsize(submission_service.zip_file_path)
+                    response['Content-Disposition'] = "attachment; filename={}".format(os.path.basename(submission_service.zip_file_path))
+                    return response
+            else:
+                return JsonResponse({
+                    'response_code': False,
+                    'data': [],
+                    'message': 'Resource send has been failed'
+                })
+        except Exception as e:
+            print('send error', e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Server has errors'
+            })

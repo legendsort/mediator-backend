@@ -18,6 +18,9 @@ from django.apps import apps
 from django.db.models import Q
 from Paper.policies import RequestAccessPolicy
 from Paper.services.ExchangeService import ExchangeService
+import mimetypes
+from django.http import HttpResponse
+import os
 
 
 class ExchangeFilter(django_filters.FilterSet):
@@ -240,6 +243,35 @@ class ExchangeViewSet(viewsets.ModelViewSet):
                 'message': "Server has error"
             })
 
+    # accept request
+
+    @action(detail=True, methods=['GET'], url_path='download')
+    def download(self, request, pk=None):
+        instance = self.get_object()
+        try:
+            ex_service = ExchangeService(instance)
+            ex_service.make_zip_file()
+            if os.path.exists(ex_service.zip_file_path):
+                with open(ex_service.zip_file_path, 'rb') as fh:
+                    mimetype, _ = mimetypes.guess_type(ex_service.zip_file_path)
+                    response = HttpResponse(fh.read(), content_type=mimetype)
+                    response['Content-Length'] = os.path.getsize(ex_service.zip_file_path)
+                    response['Content-Disposition'] = "attachment; filename={}".format(
+                        os.path.basename(ex_service.zip_file_path))
+                    return response
+        except Status.DoesNotExist:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': f"RequestStatus has no Accepted status"
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Server has error"
+            })
     # accept request
     @action(detail=True, methods=['post'], url_path='reject')
     def reject(self, request, pk=None):

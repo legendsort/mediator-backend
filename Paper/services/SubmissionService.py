@@ -190,8 +190,7 @@ class SubmissionService:
             return True
 
     def send(self):
-        self.create_information_document()
-        self.zip_data()
+        self.make_zip_file()
         try:
             request_zip_file_path = f"{getattr(settings, 'NIS_SEND_DIR_PATH')}/{basename(self.zip_file_path)}"
             if os.path.exists(request_zip_file_path):
@@ -208,3 +207,16 @@ class SubmissionService:
             print('send_error', e)
             return False
 
+    def make_zip_file(self):
+        self.create_information_document()
+        self.zip_data()
+        return self.zip_file_path
+
+    def remove_zip_file(self):
+        try:
+            if os.path.exists(self.zip_file_path):
+                os.remove(self.zip_file_path)
+                return True
+        except Exception as e:
+            print('remove zip file', e)
+        return False

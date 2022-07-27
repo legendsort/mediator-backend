@@ -466,6 +466,7 @@ class ResourceUploadDetailSerializer(serializers.ModelSerializer):
     upload_files = UploadSerializer(source='get_upload_files',  read_only=True, many=True)
     user = serializers.SerializerMethodField(read_only=True)
     status = serializers.SerializerMethodField(read_only=True)
+    codename = serializers.SerializerMethodField(read_only=True)
     order_id = serializers.SerializerMethodField(read_only=True)
 
     @staticmethod
@@ -517,6 +518,16 @@ class ResourceUploadDetailSerializer(serializers.ModelSerializer):
             print(e)
             return None
 
+    @staticmethod
+    def get_codename(obj):
+        try:
+            order = obj.get_order()           
+            return StatusSerializer(order.status).data.get('codename')
+
+        except Exception as e:
+            print(e)
+            return None            
+
     class Meta:
         model = Resource
         fields = [
@@ -529,7 +540,8 @@ class ResourceUploadDetailSerializer(serializers.ModelSerializer):
             'status',
             'upload_files',
             'order_id',
-            'flag'
+            'flag',
+            'codename'
         ] 
 
 

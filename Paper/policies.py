@@ -67,7 +67,7 @@ class SubmissionAccessPolicy(AccessPolicy):
             "effect": "allow"
         },
         {
-            "action": ["accept", "send"],
+            "action": ["accept", "send", "download"],
             "principal": "*",
             "condition_expression": ["has_perms:mediate_paper or has_perms:manage_paper"],
             "effect": "allow"

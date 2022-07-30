@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets, status
 import Paper.serializers
-from Paper.models import Journal, Publisher, Country, ReviewType, Category, ProductType, Frequency, Article, Status, Resource
+from Paper.models import Journal, Publisher, Country, ReviewType, Category, ProductType, Frequency, Article, Status, Language
 from Paper.serializers import JournalSerializer, PublisherSerializer, PublisherSimpleSerializer, JournalSimpleSerializer
 import django_filters
 from Paper.render import JSONResponseRenderer
@@ -72,12 +72,12 @@ class JournalViewSet(viewsets.ModelViewSet):
             serializer = JournalSerializer(data=base_data)
             if serializer.is_valid():
                 serializer.save()
-                countries = request.data.getlist('countries')
+                languages = request.data.getlist('languages')
                 products = request.data.getlist('products')
                 categories = request.data.getlist('categories')
                 journal = serializer.instance
                 journal.assign_product(products)
-                journal.assign_country(countries)
+                journal.assign_language(languages)
                 journal.assign_category(categories)
                 if request.data.get('review_type') and ReviewType.objects.filter(pk=int(request.data.get('review_type', 0))).exists():
                     journal.review_type = ReviewType.objects.get(pk=int(request.data.get('review_type', 0)))
@@ -87,6 +87,9 @@ class JournalViewSet(viewsets.ModelViewSet):
                 if request.data.get('publisher') and Publisher.objects.filter(
                         pk=int(request.data.get('publisher', 0))).exists():
                     journal.publisher = Publisher.objects.get(pk=int(request.data.get('publisher', 0)))
+                if request.data.get('country') and Country.objects.filter(
+                        pk=int(request.data.get('country'))).exists():
+                    journal.country = Country.objects.get(pk=int(request.data.get('country')))
                 journal.save()
             else:
                 print(serializer.errors)
@@ -117,7 +120,7 @@ class JournalViewSet(viewsets.ModelViewSet):
                 if request.data.getlist('products') is not []:
                     instance.assign_product(request.data.getlist('products'))
                 if request.data.getlist('countries') is not []:
-                    instance.assign_country(request.data.getlist('countries'))
+                    instance.assign_language(request.data.getlist('languages'))
                 if request.data.getlist('categories') is not []:
                     instance.assign_category(request.data.getlist('categories'))
                 if request.data.get('review_type') and ReviewType.objects.filter(
@@ -129,6 +132,9 @@ class JournalViewSet(viewsets.ModelViewSet):
                 if request.data.get('publisher') and Publisher.objects.filter(
                         pk=int(request.data.get('publisher'))).exists():
                     instance.publisher = Publisher.objects.get(pk=int(request.data.get('publisher')))
+                if request.data.get('country') and Country.objects.filter(
+                        pk=int(request.data.get('country'))).exists():
+                    instance.country = Country.objects.get(pk=int(request.data.get('country')))
                 serializer.save()
                 instance.save()
             else:
@@ -514,7 +520,43 @@ class RequirementViewSet(viewsets.ModelViewSet):
             })
 
 
-# Request API
+# Language API
+
+# Requirement API
+class LanguageFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
+    code = django_filters.CharFilter(field_name='code', lookup_expr='icontains')
+
+    class Meta:
+        model = Paper.models.Language
+        fields = {
+            'name': ['icontains']
+        }
+
+
+class LanguageViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = Paper.serializers.LanguageSerializer
+    pagination_class = StandardResultsSetPagination
+    renderer_classes = [JSONResponseRenderer, ]
+    filter_backends = [DjangoFilterBackend, ]
+    filterset_class = LanguageFilter
+    queryset = Paper.models.Language.objects.all()
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            self.perform_destroy(self.get_object())
+            return JsonResponse({
+                'response_code': True,
+                'data': [],
+                'message': 'Successfully removed!'
+            })
+        except django.db.DatabaseError:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Can not remove this  instance'
+            })
 
 
 

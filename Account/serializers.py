@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+import Account.models
 from Account.models import Role, Permission, User, BusinessType, Unit, CustomerProfile, RemoteAccount, Notice, Post, Comment
 from django.apps import apps
 
@@ -202,9 +204,30 @@ class NoticeSerializer(serializers.ModelSerializer):
 
 
 #
+class UploadFileSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField(read_only=True)
+
+    def get_url(self, obj):
+        try:
+            request = self.context.get('request')
+            url = obj.file.url
+            return request.build_absolute_uri(url)
+        except Exception as e:
+            print('upload file ', e)
+            return None
+
+    class Meta:
+        model = Account.models.UploadFile
+        fields = [
+            'url'
+        ]
+
+
+#
 class CommentSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
+    attachments = UploadFileSerializer(source='get_upload_files', many=True, read_only=True)
 
     class Meta:
         model = Comment
@@ -212,6 +235,7 @@ class CommentSerializer(serializers.ModelSerializer):
             'id',
             'content',
             'created_at',
+            'attachments',
             'user',
         ]
 
@@ -221,6 +245,7 @@ class PostSerializer(serializers.ModelSerializer):
     author = serializers.StringRelatedField(read_only=True)
     created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", read_only=True)
     comments = CommentSerializer(source='get_comments', many=True, read_only=True)
+    attachments = UploadFileSerializer(source='get_upload_files', many=True, read_only=True)
 
     class Meta:
         model = Post
@@ -230,5 +255,6 @@ class PostSerializer(serializers.ModelSerializer):
             'author',
             'body',
             'comments',
+            'attachments',
             'created_at'
         ]

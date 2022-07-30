@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from Paper.models import Journal, ReviewType, Country, ProductType, Frequency, Category,\
-    Publisher, Article, Submit, Order, Author, Status, Requirement, UploadFile, OrderStatusLog, Resource, Exchange
+    Publisher, Article, Submit, Order, Author, Status, Requirement, UploadFile, OrderStatusLog, Resource, Exchange, Language
 from Contest.serializers import UploadSerializer
 from Account.serializers import BusinessSerializer, UserDetailSerializer
 
@@ -53,6 +53,17 @@ class CountrySerializer(serializers.ModelSerializer):
             'phone_code',
         ]
 
+class LanguageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Language
+        fields = [
+            'id',
+            'name',
+            'description',
+            'code'
+        ]
+
 
 class CategorySerializer(serializers.ModelSerializer):
 
@@ -92,9 +103,10 @@ class PublisherSimpleSerializer(serializers.ModelSerializer):
 
 class JournalSerializer(serializers.ModelSerializer):
     review_type = ReviewTypeSerializer(read_only=True)
-    countries = CountrySerializer(many=True, required=False)
-    frequency = FrequencySerializer(read_only=True)
     categories = CategorySerializer(many=True, required=False)
+    frequency = FrequencySerializer(read_only=True)
+    country = CountrySerializer(read_only=True)
+    languages = LanguageSerializer(many=True, required=False)
     products = ProductTypeSerializer(many=True, required=False)
     publisher = PublisherSerializer(read_only=True, required=False)
 
@@ -114,9 +126,10 @@ class JournalSerializer(serializers.ModelSerializer):
             'impact_factor',
             'open_access',
             'flag',
-            'countries',
+            'languages',
             'frequency',
             'categories',
+            'country',
             'products',
             'publisher'
         ]
@@ -703,3 +716,5 @@ class ExchangeDetailSerializer(serializers.ModelSerializer):
             'message',
             'status_logs'
         ]
+
+

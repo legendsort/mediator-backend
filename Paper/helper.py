@@ -1,10 +1,11 @@
 import hashlib
 import pathlib
 from collections import OrderedDict
-
 from rest_framework.pagination import PageNumberPagination
 from enum import Enum
 from os.path import basename
+from django.apps import apps
+
 
 from rest_framework.response import Response
 
@@ -27,6 +28,10 @@ def journal_resource_path(instance, filename):
 
 def exchange_attachment_path(instance, filename):
     return f"upload/exchanges/{hashlib.md5(str(instance.title).encode('utf-8')).hexdigest()}/{hashlib.md5(str(filename).encode('utf-8')).hexdigest()}{pathlib.Path(filename).suffix}"
+
+
+def upload_file_path(instance, filename):
+    return f"upload/{'post' if isinstance(instance.source, apps.get_model('Account.Post')) else 'comment'}/{instance.source.id}/{hashlib.md5(str(filename).encode('utf-8')).hexdigest()}{pathlib.Path(filename).suffix}"
 
 
 def submit_upload_path(instance, filename):

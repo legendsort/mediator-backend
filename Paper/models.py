@@ -39,8 +39,17 @@ class Country(models.Model):
 
 
 class Frequency(models.Model):
-    name = models.CharField(max_length=12)
+    name = models.CharField(max_length=12, unique=True)
     description = models.CharField(max_length=255)
+
+
+class Language(models.Model):
+    name = models.CharField(max_length=192, null=True)
+    code = models.CharField(max_length=192, unique=True)
+    description = models.CharField(max_length=255, null=True)
+
+    def __str__(self):
+        return self.name
 
 
 class ProductType(models.Model):
@@ -68,9 +77,9 @@ class JournalCategory(models.Model):
     category = models.ForeignKey('Category', on_delete=models.CASCADE, related_name='category_journal')
 
 
-class JournalCountry(models.Model):
+class JournalLanguage(models.Model):
     journal = models.ForeignKey('Journal', on_delete=models.CASCADE, related_name='journal_country')
-    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='country_journal')
+    language = models.ForeignKey('Language', on_delete=models.CASCADE, related_name='journal_language')
 
 
 class JournalProductType(models.Model):
@@ -87,6 +96,7 @@ class Journal(TimeStampMixin):
     review_type = models.ForeignKey(ReviewType, on_delete=models.DO_NOTHING, related_name='journal_review_method',  null=True)
     publisher = models.ForeignKey(Publisher, on_delete=models.DO_NOTHING, related_name='journal_publisher', null=True)
     frequency = models.ForeignKey(Frequency, on_delete=models.DO_NOTHING, related_name='journal_frequency', null=True)
+    country = models.ForeignKey(Country, on_delete=models.DO_NOTHING, related_name='journal_country', null=True)
     guide_url = models.FileField(null=True, upload_to=journal_resource_path, max_length=1024)
     url = models.URLField(null=True)
     start_year = models.SmallIntegerField(default=1990)
@@ -94,10 +104,10 @@ class Journal(TimeStampMixin):
     open_access = models.IntegerField(null=True)
     flag = models.BooleanField(default=False)
     issues_per_year = models.SmallIntegerField(null=True)
-    countries = models.ManyToManyField(
-        Country,
-        through='JournalCountry',
-        through_fields=('journal', 'country'),
+    languages = models.ManyToManyField(
+        Language,
+        through='JournalLanguage',
+        through_fields=('journal', 'language'),
         blank=True,
     )
 
@@ -144,14 +154,14 @@ class Journal(TimeStampMixin):
                 pass
         return True
 
-    def assign_country(self, countries, is_update=True):
-        self.countries.clear() if is_update else ''
-        for country in countries:
+    def assign_language(self, languages, is_update=True):
+        self.languages.clear() if is_update else ''
+        for language in languages:
             try:
-                country = Country.objects.get(pk=country)
-                if not self.countries.filter(pk=country.pk).exists():
-                    self.countries.add(country)
-            except Country.DoesNotExist:
+                language = Language.objects.get(pk=language)
+                if not self.languages.filter(pk=language.pk).exists():
+                    self.languages.add(language)
+            except Language.DoesNotExist:
                 pass
         return True
 
@@ -202,6 +212,9 @@ class Order(TimeStampMixin):
         blank=True,
     )
     download_at = models.DateTimeField(null=True)
+    censor_input_info = models.JSONField(null=True)
+    censor_output_info = models.JSONField(null=True)
+    censor_document = models.CharField(max_length=255, null=True)
     censor_file = models.FileField(upload_to=censor_file_path, null=True)
     is_censor_download = models.BooleanField(default=False)
 

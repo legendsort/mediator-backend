@@ -108,6 +108,14 @@ DATABASES = {
         'PASSWORD': 'qwe',
         'HOST': '192.168.4.81',
         'PORT': '',
+    },
+    'old': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'paper_old',
+        'USER': 'mediatory',
+        'PASSWORD': 'qwe',
+        'HOST': '192.168.4.81',
+        'PORT': '',
     }
 }
 

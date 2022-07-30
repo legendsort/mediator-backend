@@ -11,6 +11,7 @@ import hashlib
 from django.utils import timezone
 from django.apps import apps
 from Account.services.NotificationService import NotificationService
+from Paper.helper import upload_file_path
 
 
 class TimeStampMixin(models.Model):
@@ -229,10 +230,20 @@ class Message(models.Model):
     is_highlight = models.BooleanField(default=False)
 
 
+class UploadFile(TimeStampMixin):
+    name = models.CharField(max_length=255)
+    file = models.FileField(upload_to=upload_file_path)
+    source = GenericForeignKey()
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
+    object_id = models.PositiveIntegerField(null=True)
+
+
 class Post(TimeStampMixin):
     author = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user_post', null=True)
     title = models.CharField(max_length=255)
-    body = models.JSONField(null=True)
+    body = models.TextField(null=True)
+    open_access = models.BooleanField(default=False)
+    upload_file = GenericRelation(UploadFile, on_delete=models.CASCADE, related_query_name='post_upload_file')
 
     class Meta:
         verbose_name = _("Post")
@@ -247,11 +258,40 @@ class Post(TimeStampMixin):
     def get_comments(self):
         return Comment.objects.filter(post=self)
 
+    def assign_upload_files(self, files):
+        try:
+            for file in files:
+                upload_file = UploadFile()
+                upload_file.name = str(file)
+                upload_file.file = file
+                upload_file.source = self
+                upload_file.save()
+        except Exception as e:
+            print('---> upload file ', e)
+
+    def get_upload_files(self):
+        return UploadFile.objects.filter(post_upload_file=self)
+
 
 class Comment(TimeStampMixin):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='user_comment')
     content = models.TextField(null=True)
-    post = models.ForeignKey(Post, on_delete=models.DO_NOTHING, related_name='post_comment')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='post_comment')
+    upload_file = GenericRelation(UploadFile, on_delete=models.CASCADE, related_query_name='comment_upload_file')
+
+    def assign_upload_files(self, files):
+        try:
+            for file in files:
+                upload_file = UploadFile()
+                upload_file.name = str(file)
+                upload_file.file = file
+                upload_file.source = self
+                upload_file.save()
+        except Exception as e:
+            print('---> upload file ', e)
+
+    def get_upload_files(self):
+        return UploadFile.objects.filter(comment_upload_file=self)
 
 
 class Notice(TimeStampMixin):

@@ -272,6 +272,7 @@ class ExchangeViewSet(viewsets.ModelViewSet):
                 'data': [],
                 'message': "Server has error"
             })
+
     # accept request
     @action(detail=True, methods=['post'], url_path='reject')
     def reject(self, request, pk=None):
@@ -305,10 +306,17 @@ class ExchangeViewSet(viewsets.ModelViewSet):
     def update_status(self, request, pk=None):
         instance = self.get_object()
         try:
-            user = request.user
-            instance.dealer = user
-            instance.update_status(Status.objects.get(id=request.data.get('status')),
-                                   message=f"{request.data.get('message')}")
+            if request.data.get('status'):
+                instance.update_status(Status.objects.get(id=request.data.get('status')),
+                                       message=f"{request.data.get('msg')}")
+            else:
+                instance.update_status(Status.objects.get(codename='complete'),
+                                       message=request.data.get('msg'))
+                file = request.data.get('censorship')
+                if file:
+                    order = instance.get_order()
+                    order.censor_file = file
+                    order.save()
             instance.save()
             return JsonResponse({
                 'response_code': True,

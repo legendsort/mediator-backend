@@ -13,14 +13,13 @@ from Account.services import GatewayService
 from Account.models import RemoteAccount
 
 
-class ExchangeService:
-    def __init__(self, exchange):
-        self.exchange = exchange
-        self.order = exchange.set_order()
+class CensorshipService:
+    def __init__(self, order):
+        self.order = order
         self.DOCUMENT_ROOT_PATH = '/'.join([
             getattr(settings, 'MEDIA_ROOT', '/media'),
-            'exchange',
-            str(self.order.id)
+            'order',
+            str(order.id)
         ])
         self.document = Document()
         section = self.document.sections[0]

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from Paper.models import Journal, ReviewType, Country, ProductType, Frequency, Category,\
-    Publisher, Article, Submit, Order, Author, Status, Requirement, UploadFile, OrderStatusLog, Resource, Exchange
+    Publisher, Article, Submit, Order, Author, Status, Requirement, UploadFile, OrderStatusLog, Resource, Exchange, Language
 from Contest.serializers import UploadSerializer
 from Account.serializers import BusinessSerializer, UserDetailSerializer
 
@@ -53,6 +53,17 @@ class CountrySerializer(serializers.ModelSerializer):
             'phone_code',
         ]
 
+class LanguageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Language
+        fields = [
+            'id',
+            'name',
+            'description',
+            'code'
+        ]
+
 
 class CategorySerializer(serializers.ModelSerializer):
 
@@ -92,9 +103,10 @@ class PublisherSimpleSerializer(serializers.ModelSerializer):
 
 class JournalSerializer(serializers.ModelSerializer):
     review_type = ReviewTypeSerializer(read_only=True)
-    countries = CountrySerializer(many=True, required=False)
-    frequency = FrequencySerializer(read_only=True)
     categories = CategorySerializer(many=True, required=False)
+    frequency = FrequencySerializer(read_only=True)
+    country = CountrySerializer(read_only=True)
+    languages = LanguageSerializer(many=True, required=False)
     products = ProductTypeSerializer(many=True, required=False)
     publisher = PublisherSerializer(read_only=True, required=False)
 
@@ -114,9 +126,10 @@ class JournalSerializer(serializers.ModelSerializer):
             'impact_factor',
             'open_access',
             'flag',
-            'countries',
+            'languages',
             'frequency',
             'categories',
+            'country',
             'products',
             'publisher'
         ]
@@ -593,6 +606,8 @@ class ExchangeListSerializer(serializers.ModelSerializer):
     status = serializers.SerializerMethodField(read_only=True)
     username = serializers.SerializerMethodField(read_only=True)
     order_id = serializers.SerializerMethodField(read_only=True)
+    status_code = serializers.SerializerMethodField(read_only=True)
+    censorship = serializers.SerializerMethodField(read_only=True)
     message = serializers.SerializerMethodField(read_only=True)
     dealer = serializers.StringRelatedField(read_only=True)
     status_logs = StatusLogsSerializer(source='get_status_logs', many=True, read_only=True)
@@ -614,6 +629,16 @@ class ExchangeListSerializer(serializers.ModelSerializer):
                 return order.type.name
             return None
 
+        except Exception as e:
+            return None
+
+    @staticmethod
+    def get_status_code(obj):
+        try:
+            order = obj.get_order()
+            if order.status:
+                return order.status.codename
+            return None
         except Exception as e:
             return None
 
@@ -644,6 +669,17 @@ class ExchangeListSerializer(serializers.ModelSerializer):
         except Exception as e:
             return None
 
+    def get_censorship(self, obj):
+        try:
+            request = self.context.get('request')
+            order = obj.get_order()
+            if order.censor_file:
+                return request.build_absolute_uri(order.censor_file.url)
+            else:
+                return None
+        except Exception as e:
+            return None
+
     class Meta:
         model = Exchange
         fields = [
@@ -653,8 +689,10 @@ class ExchangeListSerializer(serializers.ModelSerializer):
             'updated_at',
             'order_type',
             'status',
+            'status_code',
             'username',
             'purpose',
+            'censorship',
             'attachment',
             'site_url',
             'username',
@@ -703,3 +741,5 @@ class ExchangeDetailSerializer(serializers.ModelSerializer):
             'message',
             'status_logs'
         ]
+
+

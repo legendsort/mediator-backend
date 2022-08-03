@@ -20,7 +20,7 @@ class ExchangeService:
         self.DOCUMENT_ROOT_PATH = '/'.join([
             getattr(settings, 'MEDIA_ROOT', '/media'),
             'exchange',
-            str(exchange.id)
+            str(self.order.id)
         ])
         self.document = Document()
         section = self.document.sections[0]

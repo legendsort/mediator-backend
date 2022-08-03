@@ -1,6 +1,3 @@
-from django.db import models
-
-# Create your models here.
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, AbstractUser
 from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
@@ -12,7 +9,8 @@ from django.utils import timezone
 from django.apps import apps
 from Account.services.NotificationService import NotificationService
 from Paper.helper import upload_file_path
-
+from django.dispatch import receiver
+import os
 
 class TimeStampMixin(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -325,3 +323,9 @@ class Notice(TimeStampMixin):
 def user_directory_path(instance, filename):
     return f"upload/{hashlib.md5(str(instance.user.id).encode('utf-8')).hexdigest()}/{filename}"
 
+
+@receiver(models.signals.post_delete, sender=UploadFile)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    if instance.file:
+        if os.path.isfile(instance.file.path):
+            os.remove(instance.file.path)

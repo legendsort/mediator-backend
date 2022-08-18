@@ -31,6 +31,7 @@ class LandingViewSet(viewsets.ModelViewSet):
     permission_classes = [IntroductionAccessPolicy]
     serializer_class = Account.serializers.IntroductionSerializer
     renderer_classes = [JSONResponseRenderer, ]
+    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_class = IntroductionFilter
 

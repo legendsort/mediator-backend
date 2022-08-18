@@ -12,6 +12,7 @@ from Paper.helper import upload_file_path
 from django.dispatch import receiver
 import os
 
+
 class TimeStampMixin(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -320,6 +321,12 @@ class Notice(TimeStampMixin):
         }
 
 
+class Introduction(models.Model):
+    title = models.CharField(max_length=255, null=True)
+    detail = models.TextField(null=True)
+    type = models.CharField(max_length=255)
+
+
 def user_directory_path(instance, filename):
     return f"upload/{hashlib.md5(str(instance.user.id).encode('utf-8')).hexdigest()}/{filename}"
 
@@ -329,3 +336,4 @@ def auto_delete_file_on_delete(sender, instance, **kwargs):
     if instance.file:
         if os.path.isfile(instance.file.path):
             os.remove(instance.file.path)
+

@@ -110,3 +110,23 @@ class PostAccessPolicy(AccessPolicy):
     @staticmethod
     def is_administrator(request, view, action) -> bool:
         return request.user.is_superuser or request.user.has_perm('administrator')
+
+
+class IntroductionAccessPolicy(AccessPolicy):
+    statements = [
+        {
+            'action': ['list', 'retrieve'],
+            'principal': '*',
+            'effect': 'allow',
+        },
+        {
+            "action": ['destroy', "update", "partial_update", "create"],
+            "principal": "*",
+            "effect": "allow",
+            'condition': 'is_administrator'
+        },
+    ]
+
+    @staticmethod
+    def is_administrator(request, view, action) -> bool:
+        return request.user.is_superuser or request.user.has_perm('administrator')

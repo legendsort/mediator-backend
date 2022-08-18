@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 import Account.models
-from Account.models import Role, Permission, User, BusinessType, Unit, CustomerProfile, RemoteAccount, Notice, Post, Comment
+from Account.models import Role, Permission, User, BusinessType, Unit, CustomerProfile, RemoteAccount, Notice, Post, Comment, Introduction
 from django.apps import apps
 
 
@@ -257,4 +257,16 @@ class PostSerializer(serializers.ModelSerializer):
             'comments',
             'attachments',
             'created_at'
+        ]
+
+
+class IntroductionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Introduction
+        fields = [
+            'id',
+            'title',
+            'detail',
+            'type',
         ]

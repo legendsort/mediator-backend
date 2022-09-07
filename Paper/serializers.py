@@ -408,6 +408,7 @@ class ResourceSerializer(serializers.ModelSerializer):
     message = serializers.SerializerMethodField(read_only=True)
     dealer = serializers.StringRelatedField(read_only=True)
     status_logs = StatusLogsSerializer(source='get_status_logs', many=True, read_only=True)
+    codename = serializers.SerializerMethodField(read_only=True)
 
     @staticmethod
     def get_message(obj):
@@ -454,7 +455,17 @@ class ResourceSerializer(serializers.ModelSerializer):
             return order.id
 
         except Exception as e:
-            return None                                                      
+            return None   
+
+    @staticmethod
+    def get_codename(obj):
+        try:
+            order = obj.get_order()           
+            return StatusSerializer(order.status).data.get('codename')
+
+        except Exception as e:
+            print(e)
+            return None                                                                  
 
     class Meta:
         model = Resource
@@ -469,7 +480,8 @@ class ResourceSerializer(serializers.ModelSerializer):
             'order_id',
             'message',
             'dealer',
-            'status_logs'
+            'status_logs',
+            'codename'
         ]        
 
 

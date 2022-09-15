@@ -270,8 +270,7 @@ class ResourceUploadViewSet(viewsets.ModelViewSet):
             if instance:
                 instance.delete()
             pass
-        except Exception as e:
-            print('----', e)
+        except Exception as e:            
             if instance:
                 instance.delete()            
             return JsonResponse({
@@ -358,10 +357,10 @@ class ResourceViewSet(viewsets.ModelViewSet):
                 serializer.save()
                 user = request.user
                 instance = serializer.instance
-                status = Status.objects.get(name='Requested') 
+                status = Status.objects.get(codename='request') 
                 instance.set_order(user=request.user, status=status)
-                instance.update_status(Status.objects.get(name='Requested'),
-                                       message=f"RequestStatus has been started by {user.username}")
+                instance.update_status(Status.objects.get(codename='request'),
+                                       message=f"{user.username}에 의하여 자료가 신청되였습니다.")
             else:
                 print(serializer.errors)
                 return JsonResponse({
@@ -403,7 +402,7 @@ class ResourceViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             order = instance.get_order()
-            if order.status != Status.objects.get(name='Requested'):
+            if order.status != Status.objects.get(codename='request'):
                 return JsonResponse({
                     'response_code': False,
                     'data': [],
@@ -412,6 +411,12 @@ class ResourceViewSet(viewsets.ModelViewSet):
             serializer = Paper.serializers.ResourceSerializer(instance, data=self.get_base_data(), partial=True)
             if serializer.is_valid():
                 serializer.save()
+                user = request.user
+                instance = serializer.instance
+                status = Status.objects.get(codename='request') 
+                instance.set_order(user=request.user, status=status)
+                instance.update_status(Status.objects.get(codename='request'),
+                                       message=f"{user.username}에 의하여 자료신청이 갱신되였습니다.")                
             else:
                 return JsonResponse({
                     'response_code': False,
@@ -454,19 +459,19 @@ class ResourceViewSet(viewsets.ModelViewSet):
         try:
             user = request.user
             instance.dealer = user
-            instance.update_status(Status.objects.get(name='Accepted'),
-                                   message=f"RequestStatus has been started by {user.username}")
+            instance.update_status(Status.objects.get(codename='accept'),
+                                   message=f"{user.username}에 의하여 신청이 접수되였습니다.")
             instance.save()
             return JsonResponse({
                 'response_code': True,
                 'data': self.get_serializer(instance).data,
-                'message': 'RequestStatus has been accepted'
+                'message': '신청이 접수되였습니다.'
             })
         except Status.DoesNotExist:
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': f"RequestStatus has no Accepted status"
+                'message': f"Request Status has no Accepted status"
             })
         except Exception as e:
             print(e)
@@ -483,19 +488,19 @@ class ResourceViewSet(viewsets.ModelViewSet):
         try:
             user = request.user
             instance.dealer = user
-            instance.update_status(Status.objects.get(name='Checking'),
-                                   message=f"RequestStatus has been started by {user.username}")
+            instance.update_status(Status.objects.get(codename='check'),
+                                   message=f"{user.username}에 의하여 검열신청되였습니다.")
             instance.save()
             return JsonResponse({
                 'response_code': True,
                 'data': self.get_serializer(instance).data,
-                'message': 'RequestStatus has been accepted'
+                'message': 'Request Status has been accepted'
             })
         except Status.DoesNotExist:
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': f"RequestStatus has no Accepted status"
+                'message': f"Request Status has no Accepted status"
             })
         except Exception as e:
             print(e)
@@ -512,19 +517,19 @@ class ResourceViewSet(viewsets.ModelViewSet):
         try:
             user = request.user
             instance.dealer = user            
-            instance.update_status(Status.objects.get(name='Canceled'),
-                                   message=f"{request.data.get('message')}")
+            instance.update_status(Status.objects.get(codename='cancel'),
+                                   message=f"{user.username}에 의하여 보류되였습니다.")
             instance.save()
             return JsonResponse({
                 'response_code': True,
                 'data': self.get_serializer(instance).data,
-                'message': 'RequestStatus has been accepted'
+                'message': '신청이 보류되였습니다.'
             })
         except Status.DoesNotExist:
             return JsonResponse({
                 'response_code': False,
                 'data': [],
-                'message': f"RequestStatus has no Accepted status"
+                'message': f"상태가 없습니다."
             })
         except Exception as e:
             print(e)

@@ -28,7 +28,7 @@ class ExchangeFilter(django_filters.FilterSet):
     id = django_filters.CharFilter(method='search_by_order_id', lookup_expr='icontains')    
     start_updated_at = django_filters.DateTimeFilter(field_name='updated_at', lookup_expr='gt')
     end_updated_at = django_filters.DateTimeFilter(field_name='updated_at', lookup_expr='lt')
-    status = django_filters.CharFilter(method='search_by_status_id', lookup_expr='icontains')
+    status = django_filters.ModelMultipleChoiceFilter(method='search_by_status_id', lookup_expr='icontains', queryset=Status.objects.all())
     type = django_filters.CharFilter(method='search_by_type', lookup_expr='icontains')
     dealer = django_filters.CharFilter(method='search_by_dealer', lookup_expr='icontains')
 
@@ -44,8 +44,10 @@ class ExchangeFilter(django_filters.FilterSet):
 
     @staticmethod
     def search_by_status_id(queryset, name, value):
-        status_id = Status.objects.get(id=value)
-        return queryset.filter(order__status_id=status_id) 
+        if len(value):
+            return queryset.filter(order__status__in=value)
+        else:
+            return queryset.filter()
 
     @staticmethod
     def search_by_type(queryset, name, value): 
@@ -79,6 +81,7 @@ class ExchangeViewSet(viewsets.ModelViewSet):
             'purpose',
             'additional_info',
             'site_url',
+            'data_identifier',
             'attachment'
         ])
 
@@ -88,8 +91,15 @@ class ExchangeViewSet(viewsets.ModelViewSet):
             return Exchange.objects.filter()
         elif auth_user.has_perm('view_exchange'):
             return Exchange.objects.filter(order__user=auth_user, )
+        elif auth_user.has_perm('manage_exchange_status'):
+            return Exchange.objects.filter(order__user__unit=auth_user.unit, )
+        elif auth_user.has_perm('collect_exchange'):
+            return Exchange.objects.filter(Q(dealer=auth_user) | Q(dealer=None, order__status__codename__in=[
+                'start_request',
+                'accept_request'
+            ]))
         elif auth_user.has_perm('manage_exchange'):
-            return Exchange.objects.filter(Q(dealer=auth_user) | Q(dealer=None))
+            return Exchange.objects.filter()
         else:
             return Exchange.objects.filter(pk=None)
 
@@ -106,13 +116,16 @@ class ExchangeViewSet(viewsets.ModelViewSet):
                 serializer.save()
                 user = request.user
                 instance = serializer.instance
-                status = Status.objects.get(name='Requested')
+                if user.has_perm('manage_exchange_status'):
+                    status = Status.objects.get(codename='accept_request')
+                else:
+                    status = Status.objects.get(codename='start_request')
                 instance.set_order(user=request.user, status=status)
-                instance.update_status(Status.objects.get(name='Requested'),
-                                       message=f"Exchange has been started by {user.username}")
+                instance.update_status(status, message=f"Exchange has been requested by {user.username}")
                 instance.save()
             else:
-                print(serializer.errors)
+                if serializer.instance:
+                    serializer.instance.delete()
                 return JsonResponse({
                     'response_code': False,
                     'data': serializer.errors,
@@ -124,6 +137,8 @@ class ExchangeViewSet(viewsets.ModelViewSet):
                 'message': 'Successfully created!'
             })
         except Status.DoesNotExist:
+            if serializer.instance:
+                serializer.instance.delete()
             return JsonResponse({
                 'response_code': False,
                 'data': [],
@@ -131,6 +146,8 @@ class ExchangeViewSet(viewsets.ModelViewSet):
             })
         except Exception as e:
             print(e)
+            if serializer.instance:
+                serializer.instance.delete()
             return JsonResponse({
                 'response_code': False,
                 'data': [],
@@ -141,7 +158,8 @@ class ExchangeViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             order = instance.get_order()
-            if order.status != Status.objects.get(name='Requested'):
+            print(request.data.get('action'))
+            if order.status != Status.objects.get(codename='start_request') and not request.data.get('action') == 'set_identifier':
                 return JsonResponse({
                     'response_code': False,
                     'data': [],
@@ -192,7 +210,7 @@ class ExchangeViewSet(viewsets.ModelViewSet):
         try:
             user = request.user
             instance.dealer = user
-            instance.update_status(Status.objects.get(name='Accepted'),
+            instance.update_status(Status.objects.get(codename='start_collection'),
                                    message=f"Exchange has been started by {user.username}")
             instance.save()
             return JsonResponse({
@@ -214,7 +232,7 @@ class ExchangeViewSet(viewsets.ModelViewSet):
                 'message': "Server has error"
             })
 
-    # accept request
+    # send request
     @action(detail=True, methods=['post'], url_path='send')
     def send(self, request, pk=None):
         instance = self.get_object()
@@ -243,8 +261,7 @@ class ExchangeViewSet(viewsets.ModelViewSet):
                 'message': "Server has error"
             })
 
-    # accept request
-
+    # download request
     @action(detail=True, methods=['GET'], url_path='download')
     def download(self, request, pk=None):
         instance = self.get_object()
@@ -273,14 +290,14 @@ class ExchangeViewSet(viewsets.ModelViewSet):
                 'message': "Server has error"
             })
 
-    # accept request
+    # reject request
     @action(detail=True, methods=['post'], url_path='reject')
     def reject(self, request, pk=None):
         instance = self.get_object()
         try:
             user = request.user
             instance.dealer = user            
-            instance.update_status(Status.objects.get(name='Canceled'),
+            instance.update_status(Status.objects.get(codename='reject_collection'),
                                    message=f"{request.data.get('message')}")
             instance.save()
             return JsonResponse({
@@ -310,7 +327,7 @@ class ExchangeViewSet(viewsets.ModelViewSet):
                 instance.update_status(Status.objects.get(id=request.data.get('status')),
                                        message=f"{request.data.get('msg')}")
             else:
-                instance.update_status(Status.objects.get(codename='complete'),
+                instance.update_status(Status.objects.get(codename='complete_censorship'),
                                        message=request.data.get('msg'))
                 file = request.data.get('censorship')
                 if file:
@@ -335,4 +352,100 @@ class ExchangeViewSet(viewsets.ModelViewSet):
                 'response_code': False,
                 'data': [],
                 'message': "Server has error"
+            })
+
+    # update complete collection
+    @action(detail=True, methods=['post'], url_path='complete-collect')
+    def complete_collect(self, request, pk=None):
+        instance = self.get_object()
+        try:
+            instance.update_status(Status.objects.get(codename='complete_collection'),
+                                   message=f"{request.data.get('msg')}")
+            instance.size = request.data.get('size', 0)
+            instance.count = request.data.get('count', 0)
+            instance.save()
+            return JsonResponse({
+                'response_code': True,
+                'data': self.get_serializer(instance).data,
+                'message': 'Exchange has been accepted'
+            })
+        except Status.DoesNotExist:
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': f"Exchange has no Accepted status"
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': "Server has error"
+            })
+
+    # export module
+    @action(detail=False, methods=['post'], url_path='export-data')
+    def export(self, request, pk=None):
+        try:
+            auth_user = request.user
+            ids = request.data.get('ids', [])
+            if len(ids):
+                exchanges = Exchange.objects.filter(pk__in=ids)
+            else:
+                exchanges = Exchange.objects.filter(order__status__codename='start_request')
+            return JsonResponse({
+                'response_code': True,
+                'mode': 'update' if auth_user.has_perm('manage_exchange') else 'input',
+                'data': self.get_serializer(exchanges, many=True).data,
+                'message': 'Exchange has been exported'
+            }) 
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Exchange has been exported'
+            })
+
+    # import data module
+    @action(detail=False, methods=['post'], url_path='import-data')
+    def import_data(self, request, pk=None):
+        try:
+            auth_user = request.user
+            mode = request.data.get('mode', '')
+            data = request.data.get('data', [])
+            index = 0
+            if mode == 'input':
+                for exchange in data:
+                    order_id = exchange['order_id']
+                    if Exchange.objects.filter(data_identifier=order_id).exists():
+                        continue
+                    else:
+                        exg = Exchange()
+                        exg.title = exchange['title']
+                        exg.purpose = exchange['purpose']
+                        exg.detail = exchange['detail']
+                        exg.data_identifier = exchange['order_id']
+                        exg.outer_username = exchange['username']
+                        exg.save()
+                        status = Status.objects.get(codename='accept_request')
+                        exg.set_order(user=request.user, status=status)
+                        exg.update_status(status, message=f"Exchange has been requested by {auth_user.username}")
+                        exg.save()
+                        index = index + 1
+                pass
+            elif mode == 'update':
+                pass
+            return JsonResponse({
+                'response_code': True,
+                'data': [],
+                'count': index,
+                'message': 'Exchange has been exported'
+            })
+        except Exception as e:
+            print(e)
+            return JsonResponse({
+                'response_code': False,
+                'data': [],
+                'message': 'Failed import'
             })

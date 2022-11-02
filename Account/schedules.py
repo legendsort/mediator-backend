@@ -3,6 +3,9 @@ import glob
 from time import sleep
 from Account.services import NotificationService, NotifyParserService, CensorshipService
 import json
+from Account.models import Notice
+from dateutil.relativedelta import relativedelta
+from datetime import datetime
 
 
 def run_async_notify_scan():
@@ -36,3 +39,9 @@ def run_async_data_scan():
     except Exception as e:
         print(e)
         return False
+
+
+def run_remove_chat_history(ago_days=10):
+    days_ago = datetime.now() - relativedelta(days=ago_days)
+    print(Notice.objects.filter(created_at__lt=days_ago).delete())
+    pass

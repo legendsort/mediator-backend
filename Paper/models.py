@@ -483,6 +483,12 @@ class Exchange(TimeStampMixin):
     detail = models.TextField(null=True)
     dealer = models.ForeignKey('Account.User', on_delete=models.DO_NOTHING, related_name='exchange_dealer', null=True)
     attachment = models.FileField(null=True, upload_to=exchange_attachment_path, max_length=1024)
+    data_identifier = models.IntegerField(null=True)
+    outer_username = models.CharField(max_length=255, null=True)
+    outer_dealer_name = models.CharField(max_length=255, null=True)
+    outer_dealer_real_name = models.CharField(max_length=255, null=True)
+    input_size = models.DecimalField(null=True, max_digits=12, decimal_places=2)
+    input_count = models.PositiveIntegerField(null=True)
 
     def get_order(self):
         if Order.objects.filter(order_exchange=self).exists():
@@ -524,10 +530,12 @@ class Exchange(TimeStampMixin):
             }
             if self.dealer:
                 users = apps.get_model('Account.User').objects.filter(
-                    Q(id=self.dealer.id) | Q(id=order.user.id) | Q(is_superuser=True))
+                    Q(id=self.dealer.id) | Q(id=order.user.id) | Q(is_superuser=True) |
+                    Q(role__permissions__codename__in=['manage_exchange', 'manage_exchange_status']))
             else:
                 users = apps.get_model('Account.User').objects.filter(
-                    Q(role__permissions__codename='manage_request') | Q(id=order.user.id) | Q(is_superuser=True))
+                    Q(role__permissions__codename__in=['manage_exchange', 'manage_exchange_status', 'collect_exchange']) |
+                    Q(id=order.user.id) | Q(is_superuser=True))
             notification = NotificationService()
             for user in users.distinct():
                 notification.set_user(user)

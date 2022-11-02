@@ -411,13 +411,17 @@ class NoticeViewSet(viewsets.ModelViewSet):
                 users = User.objects.filter(Q(role__permissions__codename='manage_wipo'))
             elif user.has_perm('view_bank'):
                 users = User.objects.filter(Q(role__permissions__codename='manage_bank'))
+            elif user.has_perm('view_bank'):
+                users = User.objects.filter(Q(role__permissions__codename='manage_bank'))
+            elif user.has_perm('view_bank'):
+                users = User.objects.filter(Q(role__permissions__codename='manage_bank'))
             else:
-                users = User.objects.filter(pk=None)
+                users = User.objects.filter(is_superuser=True)
             print(users.count())
             return JsonResponse({
                 'response_code': True,
                 'data': UserOutSideSerializer(users, many=True).data,
-                'message': 'Successfully removed!'
+                'message': 'Successfully fetched!'
             })
         except Exception as e:
             return JsonResponse({

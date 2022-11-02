@@ -717,6 +717,7 @@ class ExchangeListSerializer(serializers.ModelSerializer):
             'username',
             'purpose',
             'censorship',
+            'data_identifier',
             'attachment',
             'site_url',
             'username',
@@ -732,6 +733,8 @@ class ExchangeDetailSerializer(serializers.ModelSerializer):
     order_id = serializers.SerializerMethodField(read_only=True)
     message = serializers.SerializerMethodField(read_only=True)
     status_logs = StatusLogsSerializer(source='get_status_logs', many=True, read_only=True)
+    status_code = serializers.SerializerMethodField(read_only=True)
+    status = serializers.SerializerMethodField(read_only=True)
 
     def get_message(self, obj):
         try:
@@ -750,6 +753,25 @@ class ExchangeDetailSerializer(serializers.ModelSerializer):
         except Exception as e:
             return None
 
+    @staticmethod
+    def get_status_code(obj):
+        try:
+            order = obj.get_order()
+            if order.status:
+                return order.status.codename
+            return None
+        except Exception as e:
+            return None
+
+    @staticmethod
+    def get_status(obj):
+        try:
+            order = obj.get_order()
+            return StatusSerializer(order.status).data
+
+        except Exception as e:
+            return None
+
     class Meta:
         model = Exchange
         fields = [
@@ -760,9 +782,12 @@ class ExchangeDetailSerializer(serializers.ModelSerializer):
             'additional_info',
             'site_url',
             'created_at',
+            'data_identifier',
             'attachment',
             'order_id',
             'message',
+            'status_code',
+            'status',
             'status_logs'
         ]
 

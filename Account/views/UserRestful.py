@@ -75,6 +75,7 @@ class UserViewSet(ModelViewSet):
             if serializer.is_valid():
                 serializer.save()
                 instance = serializer.instance
+                instance.set_password('12345678')
                 if request.data.get('role') and request.data.get('role')['id']:
                     instance.role = Role.objects.get(pk=request.data.get('role')['id'])
                     instance.save()

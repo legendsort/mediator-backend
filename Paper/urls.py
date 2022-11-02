@@ -7,7 +7,10 @@ from Paper.views.PaperSubmitRestful import SubmitViewSet
 from Contest.views import UploadViewSet
 from Paper.views.PaperRestful import JournalViewSet, PublisherViewSet, CountryViewSet, CategoryViewSet, \
     ProductTypeViewSet, FrequencyViewSet, ReviewTypeViewSet, ArticleViewSet, StatusViewSet, RequirementViewSet, LanguageViewSet
+from Paper.views.PaperSearchRestful import PaperSearchViewSet
 from rest_framework.routers import DefaultRouter
+
+
 router = DefaultRouter(trailing_slash=False)
 router.register(r'journal', JournalViewSet, basename='journal')
 router.register(r'publisher', PublisherViewSet, basename='publisher')
@@ -26,6 +29,7 @@ router.register(r'upload', UploadViewSet, basename='upload')
 router.register(r'order', OrderViewSet, basename='order')
 router.register(r'exchange', ExchangeViewSet, basename='exchange')
 router.register(r'language', LanguageViewSet, basename='language')
+router.register(r'search', PaperSearchViewSet, basename='search')
 
 urlpatterns = [
     path(r'', include(router.urls))

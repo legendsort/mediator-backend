@@ -116,7 +116,29 @@ DATABASES = {
         'PASSWORD': 'qwe',
         'HOST': '192.168.4.81',
         'PORT': '',
-    }
+    },
+    'search': {
+            'ENGINE': 'djongo',
+            'NAME': 'papers',
+            'ENFORCE_SCHEMA': False,
+            'CLIENT': {
+                'host': '192.168.4.81',
+                'port': 27017,
+                # 'username': 'db-username',
+                # 'password': 'password',
+                # 'authSource': 'db-name',
+                # 'authMechanism': 'SCRAM-SHA-1'
+            },
+            'LOGGING': {
+                'version': 1,
+                'loggers': {
+                    'djongo': {
+                        'level': 'DEBUG',
+                        'propagate': False,
+                    }
+                },
+             },
+        }
 }
 
 # Password validation
@@ -373,3 +395,5 @@ NIS_RECEIVE_DIR_PATH = env('NIS_RECEIVE_DIR_PATH')
 REMOTE_NEXTCLOUD_USER_ROOT_PATH = env('REMOTE_NEXTCLOUD_USER_ROOT_PATH')
 DEPLOY_TEMP_FOLDER_PATH = env('DEPLOY_TEMP_FOLDER_PATH')
 CONFIG_API_BASE_URL = env('CONFIG_API_BASE_URL')
+PAPER_SEARCH_API_BASE_URL = env('PAPER_SEARCH_API_BASE_URL')
+PAPER_DATABASE_URL = env('PAPER_DATABASE_URL')
